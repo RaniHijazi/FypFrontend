@@ -113,7 +113,7 @@ export default function TabNavigation({navigation}) {
           tabBarIcon: ({focused}) => (
             <TabDot
               focused={focused}
-              icon={<Octicons name="person" size={24} color={focused ? 'blue' : 'black'} />}
+              icon={<Octicons name="person" size={24} color={'black'} />}
               messageDot={true}
             />
           ),

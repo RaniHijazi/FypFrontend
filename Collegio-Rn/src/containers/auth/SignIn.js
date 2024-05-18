@@ -1,53 +1,74 @@
-import {Image, StyleSheet, TouchableOpacity, View} from 'react-native';
-import React, {useState} from 'react';
+import { Image, StyleSheet, TouchableOpacity, View } from 'react-native';
+import React, { useState } from 'react';
 
-//custom imports
+// Custom imports
 import CSafeAreaView from '../../components/common/CSafeAreaView';
-import {styles} from '../../themes';
+import { styles } from '../../themes';
 import CHeader from '../../components/common/CHeader';
 import images from '../../assets/images';
-import {moderateScale} from '../../common/constants';
+import { moderateScale } from '../../common/constants';
 import CText from '../../components/common/CText';
 import strings from '../../i18n/strings';
 import CInput from '../../components/common/CInput';
 import CButton from '../../components/common/CButton';
-import {AuthNav, StackNav} from '../../navigation/NavigationKeys';
+import { AuthNav, StackNav } from '../../navigation/NavigationKeys';
 import CKeyBoardAvoidWrapper from '../../components/common/CKeyBoardAvoidWrapper';
-import {validateEmail, validatePassword} from '../../utils/validators';
-import {StoreLoginData} from '../../utils/asyncstorage';
+import { validateEmail, validatePassword } from '../../utils/validators';
+import { StoreLoginData } from '../../utils/asyncstorage';
 
-export default function SignIn({navigation}) {
-  const [email, setEmail] = useState('');
-  const [errorEmail, setErrorEmail] = useState('');
+export default function SignIn({ navigation }) {
+  const [fullName, setFullName] = useState('');
+  const [errorFullName, setErrorFullName] = useState('');
   const [password, setPassword] = useState('');
   const [errorPassword, setErrorPassword] = useState('');
+  const [error, setError] = useState('');
 
-  const onChangeEmail = item => {
-    const {msg} = validateEmail(item);
-    setEmail(item);
-    setErrorEmail(msg);
+  const onChangeFullName = item => {
+    setFullName(item);
   };
 
   const onChangePassword = item => {
-    const {msg} = validatePassword(item);
+    const { msg } = validatePassword(item);
     setPassword(item);
     setErrorPassword(msg);
   };
 
-  const onPressSignUp = () => {
-    navigation.navigate(AuthNav.SignUp);
-  };
-
   const onPressSignIn = async () => {
-    await StoreLoginData(true);
-    navigation.reset({
-      index: 0,
-      routes: [{name: StackNav.TabBar}],
-    });
+    try {
+      const response = await fetch('http://172.20.10.3:5210/api/User/signin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fullName: fullName,
+          password: password,
+        }),
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        setError(data.error);
+        throw new Error(data.error);
+      }
+      const data = await response.json();
+      // Store login data if needed
+      await StoreLoginData(true);
+      // Navigate to the next screen
+      navigation.reset({
+        index: 0,
+        routes: [{ name: StackNav.TabBar }],
+      });
+    } catch (error) {
+      console.error('Error signing in:', error);
+    }
   };
 
   const onPressForgotPassword = () => {
     navigation.navigate(AuthNav.ForgotPassword);
+  };
+
+  const onPressSignUp = () => {
+    navigation.navigate(AuthNav.SignUp);
   };
 
   return (
@@ -64,12 +85,19 @@ export default function SignIn({navigation}) {
               numberOfLines={1}>
               {strings.signIn}
             </CText>
+             <View style={localStyles.errorContainer}>
+               {error ? (
+                 <CText type={'r12'} style={localStyles.errorMessage} numberOfLines={1}>
+                   {error}
+                 </CText>
+               ) : null}
+             </View>
             <CInput
-              placeholder={strings.email}
-              value={email}
-              onChangeText={onChangeEmail}
+              placeholder={strings.fullName}
+              value={fullName}
+              onChangeText={onChangeFullName}
               keyboardType={'default'}
-              _errorText={errorEmail}
+              _errorText={errorFullName}
             />
             <CInput
               placeholder={strings.password}
@@ -78,6 +106,7 @@ export default function SignIn({navigation}) {
               keyboardType={'default'}
               _errorText={errorPassword}
             />
+
             <TouchableOpacity onPress={onPressForgotPassword}>
               <CText type={'s12'} style={styles.mv20} numberOfLines={1}>
                 {strings.forgotPassword}
@@ -115,4 +144,15 @@ const localStyles = StyleSheet.create({
     ...styles.ph20,
     ...styles.justifyBetween,
   },
+
+  errorContainer: {
+    ...styles.flex1,
+    ...styles.justifyCenter,
+    ...styles.alignCenter,
+  },
+
+  errorMessage: {
+        color: 'red',
+        textAlign: 'center',
+      },
 });

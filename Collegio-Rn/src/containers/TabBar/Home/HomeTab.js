@@ -10,6 +10,8 @@ import Octicons from 'react-native-vector-icons/Octicons';
 import {useSelector} from 'react-redux';
 
 //custom imports
+import {TabNav} from '../../../navigation/NavigationKeys.js';
+import {TabRoute} from '../../../navigation/NavigationRoute.js';
 import CSafeAreaView from '../../../components/common/CSafeAreaView';
 import CText from '../../../components/common/CText';
 import strings from '../../../i18n/strings';
@@ -91,6 +93,13 @@ export default function HomeTab({navigation}) {
   };
 
   const ListHeaderComponent = () => {
+
+  const navigateToProfile = () => {
+      // Navigate to the profile screen
+      // You can adjust the navigation action based on your navigation setup
+      navigation.navigate(TabNav.ProfileTab); // Assuming you have access to the user data
+    };
+
     return (
       <View>
         <View style={styles.rowSpaceBetween}>
@@ -102,6 +111,12 @@ export default function HomeTab({navigation}) {
           </CText>
           <TouchableOpacity onPress={onPressSendIcon}>
             <SendIcon />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={navigateToProfile} style={styles.ml10}>
+                      <Image
+                        source={images.userImage1} // Replace with the source of your profile picture
+                        style={localStyles.imgContainer}
+                      />
           </TouchableOpacity>
         </View>
         <View

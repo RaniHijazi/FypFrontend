@@ -20,9 +20,6 @@ export default function SignUp({navigation}) {
     navigation.navigate(AuthNav.SignUpDetail);
   };
 
-  const onPressInstitute = () => {
-    navigation.navigate(AuthNav.SignUpDetail, {title: strings.institute});
-  };
 
   return (
     <CSafeAreaView>
@@ -37,22 +34,22 @@ export default function SignUp({navigation}) {
           {strings.whoAreYou}
         </CText>
         <CButton
-          title={strings.student}
+          title={strings.HSstudent}
           color={colors.textColor}
           textType={'s18'}
           onPress={onPressButton}
         />
         <CButton
-          title={strings.teacher}
+          title={strings.UAstudent}
           color={colors.textColor}
           textType={'s18'}
           onPress={onPressButton}
         />
         <CButton
-          title={strings.institute}
+          title={strings.GradStudent}
           color={colors.textColor}
           textType={'s18'}
-          onPress={onPressInstitute}
+          onPress={onPressButton}
         />
       </View>
     </CSafeAreaView>
