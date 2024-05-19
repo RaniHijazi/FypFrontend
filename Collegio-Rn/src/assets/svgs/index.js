@@ -22,7 +22,7 @@ import CameraDark from './cameraDark.svg';
 import AttachmentDark from './attachmentDark.svg';
 import GalleryDark from './galleryDark.svg';
 import GifDark from './gifDark.svg';
-
+import OfficeIcon from './Office.svg';
 export {
   HomeIcon,
   Notification,
@@ -48,4 +48,5 @@ export {
   AttachmentDark,
   GalleryDark,
   GifDark,
+  OfficeIcon,
 };

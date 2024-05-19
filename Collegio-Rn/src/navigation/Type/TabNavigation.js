@@ -9,7 +9,7 @@ import {TabRoute} from '../NavigationRoute';
 import {moderateScale} from '../../common/constants';
 import {styles} from '../../themes';
 import {useSelector} from 'react-redux';
-import {HomeIcon, Notification, ProfilePhoto, Search} from '../../assets/svgs';
+import {HomeIcon, Notification, ProfilePhoto, Search ,OfficeIcon} from '../../assets/svgs';
 
 export default function TabNavigation({navigation}) {
   const colors = useSelector(state => state.theme.theme);
@@ -113,8 +113,8 @@ export default function TabNavigation({navigation}) {
           tabBarIcon: ({focused}) => (
             <TabDot
               focused={focused}
-              icon={<Octicons name="person" size={24} color={'black'} />}
-              messageDot={true}
+              icon={<OfficeIcon/>}
+              messageDot={false}
             />
           ),
         }}

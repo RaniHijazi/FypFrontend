@@ -14,6 +14,7 @@ import {TabNav} from '../../../navigation/NavigationKeys.js';
 import {TabRoute} from '../../../navigation/NavigationRoute.js';
 import CSafeAreaView from '../../../components/common/CSafeAreaView';
 import CText from '../../../components/common/CText';
+import CProgressbar from '../../../components/common/CProgressbar';
 import strings from '../../../i18n/strings';
 import {styles} from '../../../themes';
 import {SendIcon} from '../../../assets/svgs';
@@ -92,32 +93,35 @@ export default function HomeTab({navigation}) {
     );
   };
 
+  const progress = 25;
+
   const ListHeaderComponent = () => {
 
   const navigateToProfile = () => {
-      // Navigate to the profile screen
-      // You can adjust the navigation action based on your navigation setup
-      navigation.navigate(TabNav.ProfileTab); // Assuming you have access to the user data
+      navigation.navigate(TabNav.ProfileTab);
     };
 
     return (
       <View>
         <View style={styles.rowSpaceBetween}>
-          <CText
-            type={'m18'}
-            color={colors.dark ? colors.white : colors.black}
-            numberOfLines={1}>
-            {strings.goodMorning}
-          </CText>
-          <TouchableOpacity onPress={onPressSendIcon}>
-            <SendIcon />
-          </TouchableOpacity>
+           <Image
+            source={images.FullUaLogo} // Replace with the source of your profile picture
+            style={localStyles.logoContainer}
+            />
+             <View style={localStyles.progressContainer}>
+               <CProgressbar progress={progress} />
+             </View>
           <TouchableOpacity onPress={navigateToProfile} style={styles.ml10}>
-                      <Image
-                        source={images.userImage1} // Replace with the source of your profile picture
-                        style={localStyles.imgContainer}
-                      />
+            <Image
+             source={images.userImage1} // Replace with the source of your profile picture
+             style={localStyles.ProfileimgContainer}
+             />
           </TouchableOpacity>
+          <View style={localStyles.sendIconContainer}>
+                <TouchableOpacity onPress={onPressSendIcon}>
+                   <SendIcon />
+                </TouchableOpacity>
+           </View>
         </View>
         <View
           style={[
@@ -159,6 +163,20 @@ const localStyles = StyleSheet.create({
     borderWidth: moderateScale(4),
     borderRadius: moderateScale(25),
   },
+  ProfileimgContainer: {
+      width: moderateScale(44),
+      height: moderateScale(44),
+      borderWidth: moderateScale(4),
+      borderRadius: moderateScale(25),
+      marginLeft: moderateScale(15),
+    },
+
+  logoContainer: {
+      width: moderateScale(125),
+      height: moderateScale(65),
+      borderWidth: moderateScale(4),
+      marginLeft: moderateScale(5),
+    },
   storyContainer: {
     height: moderateScale(88),
     borderRadius: moderateScale(10),
@@ -190,5 +208,18 @@ const localStyles = StyleSheet.create({
   contentContainerStyle: {
     ...styles.p15,
     paddingBottom: moderateScale(75),
+  },
+
+  sendIconContainer: {
+    flex: 1, // This will make the container take up all available horizontal space
+    alignItems: 'flex-end', // This will align the child components to the right
+
+  },
+
+  progressContainer: {
+    alignSelf: 'flex-start', // Align the container to the start of its parent
+      width: '22%', // Adjust the width as needed
+      marginTop: 5, // Add margin top for spacing
+      marginLeft: 20,
   },
 });
