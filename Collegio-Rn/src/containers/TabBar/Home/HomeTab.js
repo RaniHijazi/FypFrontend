@@ -138,6 +138,7 @@ export default function HomeTab({navigation}) {
             bounces={false}
           />
         </View>
+
       </View>
     );
   };
@@ -153,6 +154,8 @@ export default function HomeTab({navigation}) {
         contentContainerStyle={localStyles.contentContainerStyle}
       />
     </CSafeAreaView>
+
+
   );
 }
 
@@ -168,7 +171,7 @@ const localStyles = StyleSheet.create({
       height: moderateScale(44),
       borderWidth: moderateScale(4),
       borderRadius: moderateScale(25),
-      marginLeft: moderateScale(15),
+      marginLeft: moderateScale(3),
     },
 
   logoContainer: {
@@ -218,8 +221,8 @@ const localStyles = StyleSheet.create({
 
   progressContainer: {
     alignSelf: 'flex-start', // Align the container to the start of its parent
-      width: '22%', // Adjust the width as needed
+      width: '28%', // Adjust the width as needed
       marginTop: 5, // Add margin top for spacing
-      marginLeft: 20,
+      marginLeft: 15,
   },
 });

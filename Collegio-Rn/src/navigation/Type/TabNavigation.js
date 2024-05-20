@@ -107,8 +107,8 @@ export default function TabNavigation({navigation}) {
         }}
       />
       <Tab.Screen
-        name={TabNav.ProfileTab}
-        component={TabRoute.ProfileTab}
+        name={TabNav.FacultiesTab}
+        component={TabRoute.FacultiesTab}
         options={{
           tabBarIcon: ({focused}) => (
             <TabDot

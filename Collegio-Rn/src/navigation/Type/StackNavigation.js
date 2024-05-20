@@ -37,6 +37,7 @@ export default function StackNavigation() {
         component={StackRoute.ChatScreen}
       />
       <Stack.Screen name={StackNav.Setting} component={StackRoute.Setting} />
+      <Stack.Screen name={StackNav.MajorsTab} component={StackRoute.MajorsTab} />
       <Stack.Screen
         name={StackNav.StoryView}
         component={StackRoute.StoryView}

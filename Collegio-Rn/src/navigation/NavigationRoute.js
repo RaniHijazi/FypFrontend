@@ -4,7 +4,8 @@ import ProfileTab from '../containers/TabBar/Profile/ProfileTab';
 import SearchTab from '../containers/TabBar/Search/SearchTab';
 import AddPostTab from '../containers/TabBar/AddPost/AddPostTab';
 import NotificationTab from '../containers/TabBar/Notification/NotificationTab';
-
+import MajorsTab from '../containers/TabBar/Faculties/MajorsTab';
+import FacultiesTab from '../containers/TabBar/Faculties/FacultiesTab';
 // Screens Route
 import OnBoarding from '../containers/OnBoarding';
 import Connect from '../containers/auth/Connect';
@@ -47,7 +48,9 @@ export const StackRoute = {
   DeleteAccount,
   ConfirmDelete,
   AccountDeleted,
-  changePassword
+  ProfileTab,
+  changePassword,
+  MajorsTab,
 };
 
 export const AuthRoute = {
@@ -71,4 +74,6 @@ export const TabRoute = {
   AddPostTab,
   NotificationTab,
   ProfileTab,
+  MajorsTab,
+  FacultiesTab,
 };

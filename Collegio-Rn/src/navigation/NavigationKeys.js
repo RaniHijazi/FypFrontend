@@ -13,7 +13,10 @@ export const StackNav = {
   DeleteAccount: 'DeleteAccount',
   ConfirmDelete: 'ConfirmDelete',
   AccountDeleted:'AccountDeleted',
-  ChangePassword:'ChangePassword'
+  ChangePassword:'ChangePassword',
+  ProfileTab: 'ProfileTab',
+   FacultiesTab:'FacultiesTab',
+   MajorsTab:'MajorsTab',
 };
 
 export const AuthNav = {
@@ -29,6 +32,7 @@ export const AuthNav = {
   VerifyCode: 'VerifyCode',
   SetNewPassword: 'SetNewPassword',
   PasswordChange: 'PasswordChange',
+  ProfileTab: 'ProfileTab',
 };
 
 export const TabNav = {
@@ -37,4 +41,6 @@ export const TabNav = {
   AddPostTab: 'AddPostTab',
   NotificationTab: 'NotificationTab',
   ProfileTab: 'ProfileTab',
+  MajorsTab:'MajorsTab',
+  FacultiesTab:'FacultiesTab',
 };

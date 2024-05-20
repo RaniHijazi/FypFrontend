@@ -26,6 +26,10 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'column',
     alignItems: 'flex-start',
+    backgroundColor: '#FFFFFF',
+    paddingLeft: 5,
+    paddingRight: 5,
+    borderRadius:3,
   },
   textContainer: {
     marginBottom: 5,
