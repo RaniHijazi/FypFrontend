@@ -417,7 +417,7 @@ export const chatData = [
 ];
 
 export const settingData = [
-  {id: 1, title: strings.privacySettings},
+  {id: 1, title: strings.MyDocuments, route: StackNav.Documents},
   {id: 2, title: strings.changePassword, route: StackNav.ChangePassword},
   {id: 3, title: strings.activateAccount},
   {id: 4, title: strings.darkMode},

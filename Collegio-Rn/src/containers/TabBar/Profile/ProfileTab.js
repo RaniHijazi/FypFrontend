@@ -3,6 +3,7 @@ import React from 'react';
 
 //custom imports
 import CSafeAreaView from '../../../components/common/CSafeAreaView';
+import CHeader from '../../../components/common/CHeader';
 import {moderateScale} from '../../../common/constants';
 import {userPostDetail} from '../../../api/constant';
 import PostComponent from '../../../components/HomeComponent/PostComponent';
@@ -19,8 +20,13 @@ export default function ProfileTab() {
   };
 
   const ListHeaderComponent = () => {
-    return <ProfileComponent />;
-  };
+  return (
+        <View>
+          <CHeader title="Your Profile" />
+          <ProfileComponent />
+        </View>
+      );
+    };
 
   return (
     <CSafeAreaView>

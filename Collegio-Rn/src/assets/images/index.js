@@ -44,4 +44,8 @@ export default {
   messageUser5: require('./messageUser5.png'),
   messageUser6: require('./messageUser6.png'),
   FullUaLogo:require('./fullualogo.png'),
+  faculty1:require('./faculty1.png'),
+  faculty2:require('./faculty2.png'),
+  faculty3:require('./faculty3.png'),
+  faculty4:require('./faculty4.png'),
 };

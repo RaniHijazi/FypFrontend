@@ -31,6 +31,7 @@ export default function StackNavigation() {
         component={StackRoute.OtherPersonProfile}
       />
       <Stack.Screen name={StackNav.ViewPost} component={StackRoute.ViewPost} />
+      <Stack.Screen name={StackNav.ProfileTab} component={StackRoute.ProfileTab} />
       <Stack.Screen name={StackNav.Messages} component={StackRoute.Messages} />
       <Stack.Screen
         name={StackNav.ChatScreen}
@@ -38,6 +39,7 @@ export default function StackNavigation() {
       />
       <Stack.Screen name={StackNav.Setting} component={StackRoute.Setting} />
       <Stack.Screen name={StackNav.MajorsTab} component={StackRoute.MajorsTab} />
+      <Stack.Screen name={StackNav.Documents} component={StackRoute.Documents} />
       <Stack.Screen
         name={StackNav.StoryView}
         component={StackRoute.StoryView}

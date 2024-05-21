@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import typography from '../../themes/typography';
 
 const CCard = ({ facultyName, facultyImage, onPress }) => {
   return (
@@ -33,8 +34,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   name: {
-    fontSize: 12,
-    fontWeight: 'bold',
+    ...typography.fontSizes.f12,
+    ...typography.fontWeights.Bold,
     marginBottom: 10,
   },
   button: {
@@ -47,8 +48,8 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 10,
+     ...typography.fontWeights.Regular,
+    fontSize: 8,
   },
 });
 

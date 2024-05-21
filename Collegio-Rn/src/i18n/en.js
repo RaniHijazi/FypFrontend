@@ -102,7 +102,7 @@ export default {
   date: 'Sep 14, 2021',
   chatPlaceholder: 'Type your comment here...',
   setting: 'Settings',
-  privacySettings: 'Privacy Settings',
+  MyDocuments: 'My Documents',
   changePassword: 'Change Password',
   activateAccount: 'De-activate Account',
   darkMode: 'Dark Mode',
@@ -116,7 +116,7 @@ export default {
   yes: 'Yes',
   no: 'No',
   reEnterPassword: 'Re-enter Password',
-  areYouSureYouWantDoThis: 'Are you sure you want to do this?',
+  NoteDocuments: 'Note: All of your document must be Clear',
   deletedSuccessFully: 'Your account has been deleted successfully!',
   congrats:'Congrats!'
 };

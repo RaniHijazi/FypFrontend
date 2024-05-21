@@ -1,15 +1,15 @@
 import React from 'react';
-import { View, Image, TouchableOpacity, StyleSheet, TextInput } from 'react-native';
+import { View, TextInput, StyleSheet } from 'react-native';
 import { useSelector } from 'react-redux';
 import { TabNav } from '../../../navigation/NavigationKeys';
 import { moderateScale } from '../../../common/constants';
-import images from '../../../assets/images';
 import CustomHeader from '../../../components/common/CustomHeader';
+import CHeader from '../../../components/common/CHeader';
 import CTable from '../../../components/common/CTable';
 import CSafeAreaView from '../../../components/common/CSafeAreaView';
-import { styles } from '../../../themes';
 
-export default function MajorsTab({navigation}) {
+
+export default function MajorsTab({ navigation }) {
   const colors = useSelector(state => state.theme.theme);
 
   const navigateToProfile = () => {
@@ -17,17 +17,11 @@ export default function MajorsTab({navigation}) {
   };
 
   return (
-    <CSafeAreaView>
+    <CSafeAreaView style={localStyles.safeArea}>
+      <CHeader />
       <CustomHeader
         title="Majors"
-        rightComponent={(
-          <TouchableOpacity onPress={navigateToProfile}>
-            <Image
-              source={images.userImage1} // Replace with the source of your profile picture
-              style={localStyles.profileImage}
-            />
-          </TouchableOpacity>
-        )}
+        navigation={navigation}
         searchBar={(
           <View style={localStyles.searchContainer}>
             <TextInput
@@ -44,6 +38,10 @@ export default function MajorsTab({navigation}) {
 }
 
 const localStyles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: 'white',
+  },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -58,10 +56,5 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: moderateScale(10),
     height: moderateScale(40),
     marginRight: moderateScale(10),
-  },
-  profileImage: {
-    width: moderateScale(10),
-    height: moderateScale(10),
-    borderRadius: moderateScale(20),
   },
 });

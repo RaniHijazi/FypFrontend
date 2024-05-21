@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Image, TouchableOpacity, StyleSheet, TextInput, FlatList } from 'react-native';
+import { View, TextInput, StyleSheet, FlatList } from 'react-native';
 import { useSelector } from 'react-redux';
 import { TabNav } from '../../../navigation/NavigationKeys';
 import { StackNav } from '../../../navigation/NavigationKeys';
@@ -7,22 +7,18 @@ import { moderateScale } from '../../../common/constants';
 import images from '../../../assets/images';
 import CustomHeader from '../../../components/common/CustomHeader';
 import CSafeAreaView from '../../../components/common/CSafeAreaView';
-import CCard from '../../../components/common/CCard'; // Import the FacultyCard component
+import CCard from '../../../components/common/CCard';
 import { styles } from '../../../themes';
 
-export default function FacultiesTab({navigation}) {
+export default function FacultiesTab({ navigation }) {
   const colors = useSelector(state => state.theme.theme);
-
-  const navigateToProfile = () => {
-    navigation.navigate(TabNav.ProfileTab);
-  };
 
   // Dummy faculties data for demonstration
   const faculties = [
-    { id: 1, name: 'Faculty 1', image: images.userImage1 },
-    { id: 2, name: 'Faculty 2', image: images.userImage1 },
-    { id: 3, name: 'Faculty 3', image: images.userImage1 },
-    { id: 4, name: 'Faculty 4', image: images.userImage1 },
+    { id: 1, name: 'Faculty 1', image: images.faculty1 },
+    { id: 2, name: 'Faculty 2', image: images.faculty2 },
+    { id: 3, name: 'Faculty 3', image: images.faculty3 },
+    { id: 4, name: 'Faculty 4', image: images.faculty4 },
     // Add more faculties as needed
   ];
 
@@ -32,23 +28,15 @@ export default function FacultiesTab({navigation}) {
       facultyImage={item.image}
       onPress={() => {
         navigation.navigate(StackNav.MajorsTab);
-
       }}
     />
   );
 
   return (
-    <CSafeAreaView>
+    <CSafeAreaView style={localStyles.safeArea}>
       <CustomHeader
         title="Faculties"
-        rightComponent={(
-          <TouchableOpacity onPress={navigateToProfile}>
-            <Image
-              source={images.userImage1} // Replace with the source of your profile picture
-              style={localStyles.profileImage}
-            />
-          </TouchableOpacity>
-        )}
+        navigation={navigation}
         searchBar={(
           <View style={localStyles.searchContainer}>
             <TextInput
@@ -71,6 +59,10 @@ export default function FacultiesTab({navigation}) {
 }
 
 const localStyles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: 'white',
+  },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -91,5 +83,10 @@ const localStyles = StyleSheet.create({
     height: moderateScale(10),
     borderRadius: moderateScale(20),
   },
-
+  cardsContainer: {
+    paddingHorizontal: moderateScale(10),
+    paddingTop: moderateScale(20),
+  },
 });
+
+

@@ -17,6 +17,8 @@ export const StackNav = {
   ProfileTab: 'ProfileTab',
    FacultiesTab:'FacultiesTab',
    MajorsTab:'MajorsTab',
+   Documents:'Documents'
+
 };
 
 export const AuthNav = {

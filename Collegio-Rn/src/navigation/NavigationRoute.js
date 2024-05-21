@@ -6,6 +6,8 @@ import AddPostTab from '../containers/TabBar/AddPost/AddPostTab';
 import NotificationTab from '../containers/TabBar/Notification/NotificationTab';
 import MajorsTab from '../containers/TabBar/Faculties/MajorsTab';
 import FacultiesTab from '../containers/TabBar/Faculties/FacultiesTab';
+
+
 // Screens Route
 import OnBoarding from '../containers/OnBoarding';
 import Connect from '../containers/auth/Connect';
@@ -33,6 +35,7 @@ import DeleteAccount from '../containers/TabBar/Profile/DeleteAccount';
 import ConfirmDelete from '../containers/TabBar/Profile/ConfirmDelete';
 import AccountDeleted from '../containers/TabBar/Profile/AccountDeleted';
 import changePassword from '../containers/TabBar/Profile/ChangePassword';
+import Documents from '../containers/TabBar/Profile/Documents';
 
 export const StackRoute = {
   Splash,
@@ -51,6 +54,8 @@ export const StackRoute = {
   ProfileTab,
   changePassword,
   MajorsTab,
+  Documents,
+
 };
 
 export const AuthRoute = {
