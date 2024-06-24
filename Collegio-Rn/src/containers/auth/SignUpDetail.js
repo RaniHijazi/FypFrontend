@@ -11,7 +11,7 @@ import {Picker} from '@react-native-picker/picker';
 //custom imports
 import CSafeAreaView from '../../components/common/CSafeAreaView';
 import images from '../../assets/images';
-import {moderateScale, screenWidth} from '../../common/constants';
+import {moderateScale, screenWidth, API_BASE_URL} from '../../common/constants';
 import {styles} from '../../themes';
 import CText from '../../components/common/CText';
 import strings from '../../i18n/strings';
@@ -85,7 +85,7 @@ export default function SignUpDetail({route, navigation}) {
        age,
      };
 
-     const response = await fetch('http://172.20.10.3:5210/api/User/signup', {
+     const response = await fetch('${API_BASE_URL}/api/User/signup', {
        method: 'POST',
        headers: {
          'Content-Type': 'application/json',

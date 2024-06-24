@@ -1,12 +1,13 @@
 import { Image, StyleSheet, TouchableOpacity, View } from 'react-native';
 import React, { useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Custom imports
 import CSafeAreaView from '../../components/common/CSafeAreaView';
 import { styles } from '../../themes';
 import CHeader from '../../components/common/CHeader';
 import images from '../../assets/images';
-import { moderateScale } from '../../common/constants';
+import { moderateScale, API_BASE_URL } from '../../common/constants';
 import CText from '../../components/common/CText';
 import strings from '../../i18n/strings';
 import CInput from '../../components/common/CInput';
@@ -35,7 +36,7 @@ export default function SignIn({ navigation }) {
 
   const onPressSignIn = async () => {
     try {
-      const response = await fetch('http://172.20.10.3:5210/api/User/signin', {
+      const response = await fetch('${API_BASE_URL}/api/User/signin', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -45,18 +46,20 @@ export default function SignIn({ navigation }) {
           password: password,
         }),
       });
+      console.log("i reached here");
       if (!response.ok) {
         const data = await response.json();
         setError(data.error);
         throw new Error(data.error);
       }
-      const data = await response.json();
-      // Store login data if needed
+       const data = await response.json();
+          const userId = data.user.id;
+          console.log(userId);
       await StoreLoginData(true);
-      // Navigate to the next screen
+      await AsyncStorage.setItem('userId', userId.toString());
       navigation.reset({
         index: 0,
-        routes: [{ name: StackNav.TabBar }],
+        routes: [{ name: StackNav.TabBar, params: { userId: userId } }],
       });
     } catch (error) {
       console.error('Error signing in:', error);

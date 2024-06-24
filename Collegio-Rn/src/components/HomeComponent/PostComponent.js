@@ -4,46 +4,108 @@ import {
   StyleSheet,
   TouchableOpacity,
   View,
+  ActivityIndicator,
 } from 'react-native';
-import React, {useCallback, useRef, useState} from 'react';
-import {useSelector} from 'react-redux';
+import React, { useCallback, useRef, useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import {useNavigation} from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 
-//custom imports
-import {styles} from '../../themes';
-import {moderateScale, screenWidth} from '../../common/constants';
-import CText from '../common/CText';
-import {Comment, Like, Share} from '../../assets/svgs';
-import {StackNav} from '../../navigation/NavigationKeys';
 
-export default function PostComponent(props) {
-  const {item, onPress} = props;
+import { styles } from '../../themes';
+import { moderateScale, screenWidth, API_BASE_URL } from '../../common/constants';
+import CText from '../common/CText';
+import { Comment, Like, Share } from '../../assets/svgs';
+import { StackNav } from '../../navigation/NavigationKeys';
+
+export default function PostComponent({ item, onPress, userId, updatePostLikes }) {
   const navigation = useNavigation();
-  let slideRef = useRef(null);
-  const colors = useSelector(state => state.theme.theme);
-  
-  const [isSaved, setIsSaved] = useState();
+  const [isSaved, setIsSaved] = useState(false); // Initialize isSaved with false
   const [liked, setLiked] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const _onViewableItemsChanged = useCallback(({viewableItems}) => {
-    setCurrentIndex(viewableItems[0]?.index);
+  const [loading, setLoading] = useState(true);
+
+  const colors = useSelector(state => state.theme.theme);
+
+  const checkIfLiked = async () => {
+    try {
+      console.log(userId);
+       console.log(item);
+      const response = await fetch(`${API_BASE_URL}/api/Post/${item.id}/hasLiked?userId=${userId}`);
+      if (!response.ok) {
+        throw new Error('Failed to check if post is liked');
+      }
+      const hasLiked = await response.json();
+      setLiked(hasLiked);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error checking if post is liked:', error);
+      setLoading(false);
+    }
+  };
+
+  const likePost = async () => {
+    try {
+          const response = await fetch(`${API_BASE_URL}/api/Post/LikePost?post_id=${item.id}&user_id=${userId}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({}),
+          });
+      if (!response.ok) {
+        throw new Error('Failed to like post');
+      }
+      updatePostLikes(item.id, item.likesCount + 1);
+    } catch (error) {
+      console.error('Error liking post:', error);
+    }
+  };
+
+  const dislikePost = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/Post/DislikePost?post_id=${item.id}&user_id=${userId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({}),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to dislike post');
+      }
+      updatePostLikes(item.id, item.likesCount - 1);
+    } catch (error) {
+      console.error('Error disliking post:', error);
+
+    }
+  };
+
+  useEffect(() => {
+    checkIfLiked();
   }, []);
 
-  const onPressIsSaved = item => {
+  const onPressIsSaved = () => {
     setIsSaved(!isSaved);
   };
 
-  const onPressLiked = () => {
-    setLiked(!liked);
+  const onPressLiked = async () => {
+    setLoading(true);
+    if (liked) {
+      await dislikePost();
+      setLiked(false);
+    } else {
+      await likePost();
+      setLiked(true);
+    }
+    setLoading(false);
   };
 
-  const onPressViewPost = item => {
-    navigation.navigate(StackNav.ViewPost, {item: item});
+  const onPressViewPost = () => {
+    navigation.navigate(StackNav.ViewPost, { item, userId });
   };
 
-  const RenderComment = ({icon, text, onPress}) => {
+  const RenderComment = ({ icon, text, onPress }) => {
     return (
       <TouchableOpacity style={localStyles.contentStyle} onPress={onPress}>
         {icon}
@@ -57,18 +119,18 @@ export default function PostComponent(props) {
     );
   };
 
-  const renderPostImg = ({item}) => {
-    return <Image source={item} style={localStyles.postMainImgStyle} />;
-  };
-
   const RenderLikeComponent = () => {
     return (
-      <TouchableOpacity onPress={onPressLiked}>
-        <AntDesign
-          name={liked ? 'like1' : 'like2'}
-          size={moderateScale(16)}
-          color={colors.primary}
-        />
+      <TouchableOpacity onPress={onPressLiked} disabled={loading}>
+        {loading ? (
+          <ActivityIndicator size="small" color={colors.primary} />
+        ) : (
+          <AntDesign
+            name={liked ? 'like1' : 'like2'}
+            size={moderateScale(16)}
+            color={colors.primary}
+          />
+        )}
       </TouchableOpacity>
     );
   };
@@ -77,24 +139,26 @@ export default function PostComponent(props) {
     <View
       style={[
         localStyles.topContainerStyle,
-        {backgroundColor: colors.placeholderColor},
-      ]}>
+        { backgroundColor: colors.placeholderColor },
+      ]}
+    >
       <View style={localStyles.mainContainer}>
         <TouchableOpacity style={styles.flexRow} onPress={onPress}>
-          <Image source={item.image} style={localStyles.postImgStyle} />
+          <Image source={{ uri: item.userProfileImageUrl }} style={localStyles.postImgStyle} />
           <View>
             <CText
               type={'b14'}
               color={colors.dark ? colors.white : colors.black}
-              numberOfLines={1}>
-              {item.name}
+              numberOfLines={1}
+            >
+              {item.userFullName}
             </CText>
             <CText color={colors.grayScale5} numberOfLines={1} type={'m12'}>
-              {item.time}
+              {item.timestamp}
             </CText>
           </View>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => onPressViewPost(item)}>
+        <TouchableOpacity onPress={onPressViewPost}>
           <MaterialCommunityIcons
             name={'dots-vertical'}
             size={moderateScale(30)}
@@ -102,63 +166,46 @@ export default function PostComponent(props) {
           />
         </TouchableOpacity>
       </View>
-      {item.des ? (
+      {item.description ? (
         <CText
           type={'r16'}
           style={styles.mv10}
           numberOfLines={3}
-          color={colors.dark ? colors.white : colors.black}>
-          {item.des}
+          color={colors.dark ? colors.white : colors.black}
+        >
+          {item.description}
         </CText>
       ) : null}
-      {item.post ? (
+      {item.imageUrl && (
         <View>
-          <FlatList
-            data={item?.post}
-            renderItem={renderPostImg}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            pagingEnabled
-            keyExtractor={(item, index) => index.toString()}
-            bounces={false}
-            onViewableItemsChanged={_onViewableItemsChanged}
-            ref={slideRef}
+          <Image
+            source={{ uri: item.imageUrl }}
+            style={localStyles.postMainImgStyle}
           />
           <View style={styles.rowCenter}>
-            {item?.post?.map((_, index) => (
-              <View
-                key={index.toString()}
-                style={[
-                  localStyles.bottomIndicatorStyle,
-                  {
-                    width:
-                      index !== currentIndex
-                        ? moderateScale(5)
-                        : moderateScale(4),
-                    backgroundColor:
-                      index !== currentIndex
-                        ? colors.grayScale5
-                        : colors.dark
-                        ? colors.primary
-                        : colors.black,
-                  },
-                ]}
-              />
-            ))}
+            <View
+              style={[
+                localStyles.bottomIndicatorStyle,
+                {
+                  width: moderateScale(4),
+                  backgroundColor: colors.dark ? colors.primary : colors.black,
+                },
+              ]}
+            />
           </View>
         </View>
-      ) : null}
+      )}
       <View style={styles.rowSpaceBetween}>
         <View style={localStyles.contentStyle}>
-          <RenderComment icon={<RenderLikeComponent />} text={item.like} />
+          <RenderComment icon={<RenderLikeComponent />} text={item.likesCount} />
           <RenderComment
             icon={<Comment />}
-            text={item.comment}
-            onPress={() => onPressViewPost(item)}
+            text={item.commentsCount}
+            onPress={onPressViewPost}
           />
-          <RenderComment icon={<Share />} text={item.share} />
+          <RenderComment icon={<Share />} text={item.shareCount} />
         </View>
-        <TouchableOpacity onPress={() => onPressIsSaved(item)}>
+        <TouchableOpacity onPress={onPressIsSaved}>
           <MaterialCommunityIcons
             name={isSaved ? 'bookmark' : 'bookmark-outline'}
             size={moderateScale(22)}
@@ -178,7 +225,7 @@ const localStyles = StyleSheet.create({
     ...Platform.select({
       ios: {
         shadowColor: '#1E9BD4',
-        shadowOffset: {width: 0, height: 4},
+        shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 4,
       },

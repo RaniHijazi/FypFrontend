@@ -5,7 +5,7 @@ import React, {useState,useEffect} from 'react';
 //custom imports
 import CSafeAreaView from '../../components/common/CSafeAreaView';
 import images from '../../assets/images';
-import {moderateScale} from '../../common/constants';
+import {moderateScale, API_BASE_URL} from '../../common/constants';
 import {styles} from '../../themes';
 import CText from '../../components/common/CText';
 import strings from '../../i18n/strings';
@@ -25,7 +25,7 @@ export default function EmailVerification({route, navigation}) {
   useEffect(() => {
       const fetchUserDetails = async () => {
         try {
-          const response = await fetch('http://172.20.10.3:5210/api/User/' + userId);
+          const response = await fetch('${API_BASE_URL}/api/User/' + userId);
           if (!response.ok) {
             throw new Error('Failed to fetch user details');
           }
@@ -33,7 +33,7 @@ export default function EmailVerification({route, navigation}) {
         setEmail(data.email);
           //Call the sendVerificationCode endpoint with the obtained email
 
-        const sendVerificationResponse = await fetch('http://172.20.10.3:5210/api/Email/send-verification-code?userEmail=' + data.email, {
+        const sendVerificationResponse = await fetch('${API_BASE_URL}/api/Email/send-verification-code?userEmail=' + data.email, {
           method: 'POST',
         });
              if (!sendVerificationResponse.ok) {
@@ -50,7 +50,7 @@ export default function EmailVerification({route, navigation}) {
 
     const verifyVerificationCode = async () => {
       try {
-        const response = await fetch('http://172.20.10.3:5210/api/User/VerifyVerificationCode', {
+        const response = await fetch('${API_BASE_URL}/api/User/VerifyVerificationCode', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

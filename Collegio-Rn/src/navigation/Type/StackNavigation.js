@@ -6,6 +6,7 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {StackNav} from '../NavigationKeys';
 import {StackRoute} from '../NavigationRoute';
 
+
 const Stack = createNativeStackNavigator();
 
 export default function StackNavigation() {
@@ -60,6 +61,8 @@ export default function StackNavigation() {
         name={StackNav.ChangePassword}
         component={StackRoute.changePassword}
       />
+
+
     </Stack.Navigator>
   );
 }

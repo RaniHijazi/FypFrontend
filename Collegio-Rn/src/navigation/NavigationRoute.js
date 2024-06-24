@@ -37,6 +37,7 @@ import AccountDeleted from '../containers/TabBar/Profile/AccountDeleted';
 import changePassword from '../containers/TabBar/Profile/ChangePassword';
 import Documents from '../containers/TabBar/Profile/Documents';
 
+
 export const StackRoute = {
   Splash,
   OnBoarding,
@@ -55,6 +56,7 @@ export const StackRoute = {
   changePassword,
   MajorsTab,
   Documents,
+
 
 };
 

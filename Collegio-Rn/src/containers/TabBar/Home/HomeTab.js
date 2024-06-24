@@ -1,35 +1,147 @@
+import React, { useEffect, useState } from 'react';
 import {
   FlatList,
   Image,
   StyleSheet,
   TouchableOpacity,
   View,
+  ActivityIndicator,
 } from 'react-native';
-import React from 'react';
 import Octicons from 'react-native-vector-icons/Octicons';
-import {useSelector} from 'react-redux';
+import { useSelector } from 'react-redux';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useIsFocused } from '@react-navigation/native';
+import LinearGradient from 'react-native-linear-gradient';
 
-//custom imports
-import {TabNav} from '../../../navigation/NavigationKeys.js';
-import {TabRoute} from '../../../navigation/NavigationRoute.js';
+// Custom imports
+import { TabNav } from '../../../navigation/NavigationKeys.js';
+import { StackNav } from '../../../navigation/NavigationKeys';
 import CSafeAreaView from '../../../components/common/CSafeAreaView';
 import CText from '../../../components/common/CText';
 import CProgressbar from '../../../components/common/CProgressbar';
 import strings from '../../../i18n/strings';
-import {styles} from '../../../themes';
-import {SendIcon} from '../../../assets/svgs';
-import LinearGradient from 'react-native-linear-gradient';
-import {userPostData, userStoryImageData} from '../../../api/constant';
-import {moderateScale} from '../../../common/constants';
+import { styles } from '../../../themes';
+import { SendIcon } from '../../../assets/svgs';
+import { moderateScale, screenWidth, API_BASE_URL } from '../../../common/constants';
 import images from '../../../assets/images';
 import PostComponent from '../../../components/HomeComponent/PostComponent';
-import {StackNav} from '../../../navigation/NavigationKeys';
 
-export default function HomeTab({navigation}) {
+export default function HomeTab({ navigation, route }) {
   const colors = useSelector(state => state.theme.theme);
+  const isFocused = useIsFocused();
+  const [posts, setPosts] = useState([]);
+  const [stories, setStories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [userId, setUserId] = useState(null);
+  const [communityId, setCommunityId] = useState(null);
+  const [profilePath, setProfilePath] = useState(null);
+
+  const fetchUserById = async (id) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/User/${id}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch user data');
+      }
+      const userData = await response.json();
+      setCommunityId(userData.communityId);
+      setProfilePath(userData.profilePath);
+      fetchPrePosts(userData.communityId);
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      setLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  const fetchPrePosts = async (communityId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/Post/PrePosts?PreCommunityId=${communityId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch posts');
+      }
+      const data = await response.json();
+      setPosts(data);
+      setLoading(false);
+      setIsRefreshing(false);
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+      setLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  const fetchStories = async (userId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/User/${userId}/getFollowingStories`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch stories');
+      }
+      const data = await response.json();
+      setStories(data);
+      console.log('Fetched stories:', data); // Log the fetched stories
+    } catch (error) {
+      console.error('Error fetching stories:', error);
+    }
+  };
+
+  useEffect(() => {
+    const retrieveUserId = async () => {
+      try {
+        const storedUserId = await AsyncStorage.getItem('userId');
+        if (storedUserId !== null) {
+          const userIdInt = parseInt(storedUserId, 10);
+          setUserId(userIdInt);
+          console.log('Retrieved userId:', userIdInt);
+          fetchUserById(userIdInt);
+          fetchStories(userIdInt);
+        }
+      } catch (error) {
+        console.error('Error retrieving userId from AsyncStorage:', error);
+      }
+    };
+
+    retrieveUserId();
+  }, []);
+
+  useEffect(() => {
+    if (isFocused) {
+      if (communityId) {
+        fetchPrePosts(communityId);
+      } else if (userId) {
+        fetchUserById(userId);
+      }
+      if (userId) {
+        fetchStories(userId);
+      }
+    }
+  }, [isFocused, route.params?.refresh, communityId, userId]);
+
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    if (communityId) {
+      fetchPrePosts(communityId);
+    } else if (userId) {
+      fetchUserById(userId);
+    }
+    if (userId) {
+      fetchStories(userId);
+    }
+  };
+
+  const updatePostLikes = (postId, newLikeCount) => {
+    setPosts(prevPosts =>
+      prevPosts.map(post => {
+        if (post.id === postId) {
+          return { ...post, likesCount: newLikeCount };
+        }
+        return post;
+      })
+    );
+  };
 
   const onPressUserProfile = item => {
-    navigation.navigate(StackNav.OtherPersonProfile, {item: item});
+    navigation.navigate(StackNav.OtherPersonProfile, { item: item });
   };
 
   const onPressSendIcon = () => {
@@ -37,13 +149,13 @@ export default function HomeTab({navigation}) {
   };
 
   const onPressStory = item => {
-    navigation.navigate(StackNav.StoryView, {img: item});
+    navigation.navigate(StackNav.StoryView, { img: item });
   };
 
   const AddPostIcon = () => {
     return (
       <TouchableOpacity
-        style={[localStyles.AddPostIconStyle, {backgroundColor: colors.black}]}>
+        style={[localStyles.AddPostIconStyle, { backgroundColor: colors.black }]}>
         <Octicons
           name={'plus'}
           size={moderateScale(12)}
@@ -53,42 +165,43 @@ export default function HomeTab({navigation}) {
     );
   };
 
-  const renderPostComponent = ({item}) => {
+  const renderPostComponent = ({ item }) => {
     return (
-      <PostComponent item={item} onPress={() => onPressUserProfile(item)} />
+      <PostComponent item={item} onPress={() => onPressUserProfile(item)} userId={userId} updatePostLikes={updatePostLikes} />
     );
   };
 
-  const renderItem = ({item, index}) => {
+  const renderItem = ({ item, index }) => {
+    if (index === 0) {
+      return (
+        <View style={localStyles.addPostContainer}>
+          <Image
+            source={profilePath ? { uri: profilePath } : images.userImage1}
+            style={localStyles.adminImageStyle}
+          />
+          <AddPostIcon />
+        </View>
+      );
+    }
     return (
       <TouchableOpacity
         style={localStyles.mainStoryStyle}
         onPress={() => onPressStory(item)}>
-        {index === 0 ? (
-          <View>
-            <Image
-              source={images.userImage1}
-              style={localStyles.adminImageStyle}
-            />
-            <AddPostIcon />
-          </View>
-        ) : (
-          <LinearGradient
-            colors={[colors.primaryLight, colors.linearColor1]}
-            start={{x: 0, y: 0}}
-            end={{x: 1, y: 1}}
-            style={localStyles.itemInnerContainer}>
-            <Image
-              source={item}
-              style={[
-                localStyles.imgContainer,
-                {
-                  borderColor: colors.addPostBtn,
-                },
-              ]}
-            />
-          </LinearGradient>
-        )}
+        <LinearGradient
+          colors={[colors.primaryLight, colors.linearColor1]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={localStyles.itemInnerContainer}>
+          <Image
+            source={{ uri: item.storyPath }}
+            style={[
+              localStyles.imgContainer,
+              {
+                borderColor: colors.addPostBtn,
+              },
+            ]}
+          />
+        </LinearGradient>
       </TouchableOpacity>
     );
   };
@@ -96,40 +209,39 @@ export default function HomeTab({navigation}) {
   const progress = 25;
 
   const ListHeaderComponent = () => {
-
-  const navigateToProfile = () => {
+    const navigateToProfile = () => {
       navigation.navigate(TabNav.ProfileTab);
     };
 
     return (
       <View>
         <View style={styles.rowSpaceBetween}>
-           <Image
+          <Image
             source={images.FullUaLogo} // Replace with the source of your profile picture
             style={localStyles.logoContainer}
-            />
-             <View style={localStyles.progressContainer}>
-               <CProgressbar progress={progress} />
-             </View>
+          />
+          <View style={localStyles.progressContainer}>
+            <CProgressbar progress={progress} />
+          </View>
           <TouchableOpacity onPress={navigateToProfile} style={styles.ml10}>
             <Image
-             source={images.userImage1} // Replace with the source of your profile picture
-             style={localStyles.ProfileimgContainer}
-             />
+              source={images.userImage1} // Replace with the source of your profile picture
+              style={localStyles.ProfileimgContainer}
+            />
           </TouchableOpacity>
           <View style={localStyles.sendIconContainer}>
-                <TouchableOpacity onPress={onPressSendIcon}>
-                   <SendIcon />
-                </TouchableOpacity>
-           </View>
+            <TouchableOpacity onPress={onPressSendIcon}>
+              <SendIcon />
+            </TouchableOpacity>
+          </View>
         </View>
         <View
           style={[
             localStyles.storyContainer,
-            {backgroundColor: colors.placeholderColor},
+            { backgroundColor: colors.placeholderColor },
           ]}>
           <FlatList
-            data={userStoryImageData}
+            data={[{}, ...stories]} // Add an empty object to render "Add Post" as the first item
             renderItem={renderItem}
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -138,24 +250,27 @@ export default function HomeTab({navigation}) {
             bounces={false}
           />
         </View>
-
       </View>
     );
   };
 
   return (
     <CSafeAreaView>
-      <FlatList
-        data={userPostData}
-        renderItem={renderPostComponent}
-        ListHeaderComponent={<ListHeaderComponent />}
-        showsVerticalScrollIndicator={false}
-        keyExtractor={(item, index) => index.toString()}
-        contentContainerStyle={localStyles.contentContainerStyle}
-      />
+      {loading ? (
+        <ActivityIndicator size="large" color={colors.primary} />
+      ) : (
+        <FlatList
+          data={posts}
+          renderItem={renderPostComponent}
+          ListHeaderComponent={<ListHeaderComponent />}
+          showsVerticalScrollIndicator={false}
+          keyExtractor={(item, index) => index.toString()}
+          contentContainerStyle={localStyles.contentContainerStyle}
+          refreshing={isRefreshing}
+          onRefresh={handleRefresh}
+        />
+      )}
     </CSafeAreaView>
-
-
   );
 }
 
@@ -167,19 +282,18 @@ const localStyles = StyleSheet.create({
     borderRadius: moderateScale(25),
   },
   ProfileimgContainer: {
-      width: moderateScale(44),
-      height: moderateScale(44),
-      borderWidth: moderateScale(4),
-      borderRadius: moderateScale(25),
-      marginLeft: moderateScale(3),
-    },
-
+    width: moderateScale(44),
+    height: moderateScale(44),
+    borderWidth: moderateScale(4),
+    borderRadius: moderateScale(25),
+    marginLeft: moderateScale(3),
+  },
   logoContainer: {
-      width: moderateScale(125),
-      height: moderateScale(65),
-      borderWidth: moderateScale(4),
-      marginLeft: moderateScale(5),
-    },
+    width: moderateScale(125),
+    height: moderateScale(65),
+    borderWidth: moderateScale(4),
+    marginLeft: moderateScale(5),
+  },
   storyContainer: {
     height: moderateScale(88),
     borderRadius: moderateScale(10),
@@ -204,25 +318,30 @@ const localStyles = StyleSheet.create({
     width: moderateScale(16),
     borderRadius: moderateScale(20),
     position: 'absolute',
-    bottom: 0,
+    bottom: 10,
     right: 0,
     ...styles.center,
+  },
+  addPostContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: moderateScale(58),
+    height: moderateScale(80),
+    marginRight: moderateScale(10),
+    marginBottom: moderateScale(20), // Adjust this value to move the Add Post icon down
   },
   contentContainerStyle: {
     ...styles.p15,
     paddingBottom: moderateScale(75),
   },
-
   sendIconContainer: {
-    flex: 1, // This will make the container take up all available horizontal space
-    alignItems: 'flex-end', // This will align the child components to the right
-
+    flex: 1,
+    alignItems: 'flex-end',
   },
-
   progressContainer: {
-    alignSelf: 'flex-start', // Align the container to the start of its parent
-      width: '28%', // Adjust the width as needed
-      marginTop: 5, // Add margin top for spacing
-      marginLeft: 15,
+    alignSelf: 'flex-start',
+    width: '28%',
+    marginTop: 5,
+    marginLeft: 15,
   },
 });

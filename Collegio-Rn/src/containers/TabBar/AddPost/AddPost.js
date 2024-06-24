@@ -1,13 +1,12 @@
-import {StyleSheet, TouchableOpacity, View} from 'react-native';
+import {StyleSheet, TouchableOpacity, View, Alert} from 'react-native';
 import React, {useState} from 'react';
 import Octicons from 'react-native-vector-icons/Octicons';
 import {useSelector} from 'react-redux';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import ImagePicker from 'react-native-image-crop-picker';
 
-//custom imports
 import CSafeAreaView from '../../../components/common/CSafeAreaView';
-import {moderateScale} from '../../../common/constants';
+import { moderateScale, screenWidth, API_BASE_URL } from '../../../common/constants';
 import {styles} from '../../../themes';
 import {
   AttachmentDark,
@@ -20,10 +19,9 @@ import {
   GifLight,
 } from '../../../assets/svgs';
 
-export default function AddPost() {
+export default function AddPost({onImageSelected}) {
   const colors = useSelector(state => state.theme.theme);
   const [select, setSelect] = useState(false);
-  const [selectImage, setSelectImage] = useState(false);
 
   const onPressAddPost = () => {
     setSelect(true);
@@ -38,7 +36,10 @@ export default function AddPost() {
       mediaType: 'photo',
       includeBase64: true,
     }).then(image => {
-      setSelectImage(image.path);
+      onImageSelected(image);
+      setSelect(false);
+    }).catch(err => {
+      Alert.alert("Error", "Failed to open camera");
     });
   };
 
@@ -47,7 +48,10 @@ export default function AddPost() {
       mediaType: 'photo',
       includeBase64: true,
     }).then(image => {
-      setSelectImage(image.path);
+      onImageSelected(image);
+      setSelect(false);
+    }).catch(err => {
+      Alert.alert("Error", "Failed to open gallery");
     });
   };
 

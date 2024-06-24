@@ -1,35 +1,37 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, TextInput, StyleSheet, FlatList } from 'react-native';
 import { useSelector } from 'react-redux';
-import { TabNav } from '../../../navigation/NavigationKeys';
 import { StackNav } from '../../../navigation/NavigationKeys';
-import { moderateScale } from '../../../common/constants';
+import { moderateScale,API_BASE_URL } from '../../../common/constants';
 import images from '../../../assets/images';
 import CustomHeader from '../../../components/common/CustomHeader';
 import CSafeAreaView from '../../../components/common/CSafeAreaView';
 import CCard from '../../../components/common/CCard';
-import { styles } from '../../../themes';
 
 export default function FacultiesTab({ navigation }) {
   const colors = useSelector(state => state.theme.theme);
+  const [faculties, setFaculties] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  // Dummy faculties data for demonstration
-  const faculties = [
-    { id: 1, name: 'Faculty 1', image: images.faculty1 },
-    { id: 2, name: 'Faculty 2', image: images.faculty2 },
-    { id: 3, name: 'Faculty 3', image: images.faculty3 },
-    { id: 4, name: 'Faculty 4', image: images.faculty4 },
-    // Add more faculties as needed
-  ];
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/api/University/faculties`)
+      .then(response => response.json())
+      .then(data => setFaculties(data))
+      .catch(error => console.error('Error fetching faculties:', error));
+  }, []);
 
   const renderFacultyCard = ({ item }) => (
     <CCard
       facultyName={item.name}
-      facultyImage={item.image}
+      facultyImage={item.image ? { uri: item.image } : images.defaultFaculty} // Assuming defaultFaculty is a placeholder image
       onPress={() => {
-        navigation.navigate(StackNav.MajorsTab);
+        navigation.navigate(StackNav.MajorsTab, { facultyId: item.id });
       }}
     />
+  );
+
+  const filteredFaculties = faculties.filter(faculty =>
+    faculty.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -43,15 +45,17 @@ export default function FacultiesTab({ navigation }) {
               style={localStyles.searchInput}
               placeholder="Search..."
               placeholderTextColor="#888"
+              value={searchQuery}
+              onChangeText={text => setSearchQuery(text)}
             />
           </View>
         )}
       />
       <FlatList
-        data={faculties}
+        data={filteredFaculties}
         renderItem={renderFacultyCard}
         keyExtractor={item => item.id.toString()}
-        numColumns={2} // Display two cards in each row
+        numColumns={2}
         contentContainerStyle={localStyles.cardsContainer}
       />
     </CSafeAreaView>
@@ -88,5 +92,3 @@ const localStyles = StyleSheet.create({
     paddingTop: moderateScale(20),
   },
 });
-
-

@@ -1,16 +1,32 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, TextInput, StyleSheet } from 'react-native';
 import { useSelector } from 'react-redux';
 import { TabNav } from '../../../navigation/NavigationKeys';
-import { moderateScale } from '../../../common/constants';
+import { moderateScale, screenWidth, API_BASE_URL } from '../../../common/constants';
 import CustomHeader from '../../../components/common/CustomHeader';
 import CHeader from '../../../components/common/CHeader';
 import CTable from '../../../components/common/CTable';
 import CSafeAreaView from '../../../components/common/CSafeAreaView';
 
 
-export default function MajorsTab({ navigation }) {
+export default function MajorsTab({ route, navigation }) {
+  const { facultyId } = route.params;
   const colors = useSelector(state => state.theme.theme);
+  const [majors, setMajors] = useState([]);
+
+  useEffect(() => {
+    const fetchMajors = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/University/faculties/${facultyId}/majors`);
+        const data = await response.json();
+        setMajors(data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchMajors();
+  }, [facultyId]);
 
   const navigateToProfile = () => {
     navigation.navigate(TabNav.ProfileTab);
@@ -22,7 +38,7 @@ export default function MajorsTab({ navigation }) {
       <CustomHeader
         title="Majors"
         navigation={navigation}
-        searchBar={(
+        searchBar={
           <View style={localStyles.searchContainer}>
             <TextInput
               style={localStyles.searchInput}
@@ -30,9 +46,9 @@ export default function MajorsTab({ navigation }) {
               placeholderTextColor="#888"
             />
           </View>
-        )}
+        }
       />
-      <CTable />
+      <CTable data={majors} navigation={navigation} />
     </CSafeAreaView>
   );
 }
