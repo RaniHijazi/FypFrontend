@@ -55,3 +55,4 @@ export const THEME = 'THEME';
 export const ON_BOARDING = 'ON_BOARDING';
 export const ACCESS_TOKEN = 'ACCESS_TOKEN';
 export const API_BASE_URL = 'http://192.168.0.103:7210';
+export const API_BASE_URL = 'http://172.20.10.3:7210';

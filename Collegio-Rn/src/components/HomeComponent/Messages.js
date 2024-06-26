@@ -4,13 +4,13 @@ import {
   StyleSheet,
   TouchableOpacity,
   View,
+  Platform,
 } from 'react-native';
 import React, {useState} from 'react';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import AntDesign from 'react-native-vector-icons/AntDesign';
 import {useSelector} from 'react-redux';
 
-//custom imports
+// Custom imports
 import {moderateScale} from '../../common/constants';
 import CSafeAreaView from '../common/CSafeAreaView';
 import CHeader from '../common/CHeader';
@@ -34,13 +34,18 @@ export default function Messages({navigation}) {
     navigation.navigate(StackNav.ChatScreen, {data: item});
   };
 
+  const onPressAddButton = () => {
+    navigation.navigate(StackNav.CreateChat); // Update this with your actual screen name
+  };
+
   const RightIcon = () => {
     return (
       <TouchableOpacity
+        onPress={onPressAddButton}
         style={[localStyles.containerStyle, {backgroundColor: colors.primary}]}>
-        <AntDesign
-          name={'setting'}
-          size={moderateScale(20)}
+        <Ionicons
+          name={'add'}
+          size={moderateScale(24)}
           color={colors.white}
         />
       </TouchableOpacity>
@@ -62,7 +67,7 @@ export default function Messages({navigation}) {
   const renderItem = ({item}) => {
     return (
       <TouchableOpacity
-      onPress={() => onPressMessage(item)}
+        onPress={() => onPressMessage(item)}
         style={[
           localStyles.wrapContainer,
           {backgroundColor: colors.pinnedColor},

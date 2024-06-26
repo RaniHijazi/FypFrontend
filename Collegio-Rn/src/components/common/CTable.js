@@ -31,7 +31,7 @@ const CoursesTable = ({ major, navigation }) => {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const response = await fetch(`http://192.168.0.100:7210/api/University/majors/${major.id}/courses`);
+        const response = await fetch(`http://172.20.10.3:7210///api/University/majors/${major.id}/courses`);
         const data = await response.json();
         setCourses(data);
       } catch (error) {
