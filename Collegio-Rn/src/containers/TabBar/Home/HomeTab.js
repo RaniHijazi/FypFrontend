@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   View,
   ActivityIndicator,
+  Text,
 } from 'react-native';
 import Octicons from 'react-native-vector-icons/Octicons';
 import { useSelector } from 'react-redux';
@@ -31,6 +32,7 @@ export default function HomeTab({ navigation, route }) {
   const isFocused = useIsFocused();
   const [posts, setPosts] = useState([]);
   const [stories, setStories] = useState([]);
+  const [groupedStories, setGroupedStories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [userId, setUserId] = useState(null);
@@ -43,10 +45,12 @@ export default function HomeTab({ navigation, route }) {
       if (!response.ok) {
         throw new Error('Failed to fetch user data');
       }
+
       const userData = await response.json();
       setCommunityId(userData.communityId);
       setProfilePath(userData.profilePath);
       fetchPrePosts(userData.communityId);
+      console.log(profilePath);
     } catch (error) {
       console.error('Error fetching user data:', error);
       setLoading(false);
@@ -79,10 +83,32 @@ export default function HomeTab({ navigation, route }) {
       }
       const data = await response.json();
       setStories(data);
-      console.log('Fetched stories:', data); // Log the fetched stories
+      groupStoriesByUser(data);
     } catch (error) {
       console.error('Error fetching stories:', error);
     }
+  };
+
+  const groupStoriesByUser = (stories) => {
+    const grouped = stories.reduce((acc, story) => {
+      const userId = story.userId;
+      if (!acc[userId]) {
+        acc[userId] = {
+          userId: userId,
+          userFullName: story.userFullName,
+          userProfileImageUrl: story.userProfileImageUrl,
+          stories: [],
+        };
+      }
+      acc[userId].stories.push({
+        id: story.id,
+        storyPath: story.storyPath,
+        createdAt: story.createdAt,
+      });
+      return acc;
+    }, {});
+
+    setGroupedStories(Object.values(grouped));
   };
 
   useEffect(() => {
@@ -92,7 +118,6 @@ export default function HomeTab({ navigation, route }) {
         if (storedUserId !== null) {
           const userIdInt = parseInt(storedUserId, 10);
           setUserId(userIdInt);
-          console.log('Retrieved userId:', userIdInt);
           fetchUserById(userIdInt);
           fetchStories(userIdInt);
         }
@@ -148,8 +173,8 @@ export default function HomeTab({ navigation, route }) {
     navigation.navigate(StackNav.Messages);
   };
 
-  const onPressStory = item => {
-    navigation.navigate(StackNav.StoryView, { img: item });
+  const onPressStory = user => {
+    navigation.navigate(StackNav.StoryView, { user, users: groupedStories, initialUserIndex: groupedStories.findIndex(u => u.userId === user.userId) });
   };
 
   const AddPostIcon = () => {
@@ -180,7 +205,9 @@ export default function HomeTab({ navigation, route }) {
             style={localStyles.adminImageStyle}
           />
           <AddPostIcon />
+          <Text style={localStyles.userFullName}>Your story</Text>
         </View>
+
       );
     }
     return (
@@ -193,7 +220,7 @@ export default function HomeTab({ navigation, route }) {
           end={{ x: 1, y: 1 }}
           style={localStyles.itemInnerContainer}>
           <Image
-            source={{ uri: item.storyPath }}
+            source={{ uri: item.userProfileImageUrl }}
             style={[
               localStyles.imgContainer,
               {
@@ -202,6 +229,7 @@ export default function HomeTab({ navigation, route }) {
             ]}
           />
         </LinearGradient>
+        <Text style={localStyles.userFullName}>{item.userFullName}</Text>
       </TouchableOpacity>
     );
   };
@@ -217,7 +245,7 @@ export default function HomeTab({ navigation, route }) {
       <View>
         <View style={styles.rowSpaceBetween}>
           <Image
-            source={images.FullUaLogo} // Replace with the source of your profile picture
+            source={images.FullUaLogo}
             style={localStyles.logoContainer}
           />
           <View style={localStyles.progressContainer}>
@@ -225,7 +253,7 @@ export default function HomeTab({ navigation, route }) {
           </View>
           <TouchableOpacity onPress={navigateToProfile} style={styles.ml10}>
             <Image
-              source={images.userImage1} // Replace with the source of your profile picture
+              source={profilePath ? { uri: profilePath } : null}
               style={localStyles.ProfileimgContainer}
             />
           </TouchableOpacity>
@@ -241,7 +269,7 @@ export default function HomeTab({ navigation, route }) {
             { backgroundColor: colors.placeholderColor },
           ]}>
           <FlatList
-            data={[{}, ...stories]} // Add an empty object to render "Add Post" as the first item
+            data={[{}, ...groupedStories]} // Add an empty object to render "Add Post" as the first item
             renderItem={renderItem}
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -295,14 +323,15 @@ const localStyles = StyleSheet.create({
     marginLeft: moderateScale(5),
   },
   storyContainer: {
-    height: moderateScale(88),
+    height: moderateScale(95),
     borderRadius: moderateScale(10),
     ...styles.ph15,
     ...styles.mv25,
   },
   mainStoryStyle: {
     ...styles.mr10,
-    ...styles.center,
+    alignItems: 'center',
+    marginTop:moderateScale(12),
   },
   itemInnerContainer: {
     padding: moderateScale(2),
@@ -312,6 +341,7 @@ const localStyles = StyleSheet.create({
     width: moderateScale(58),
     height: moderateScale(58),
     borderRadius: moderateScale(29),
+    marginTop:moderateScale(16),
   },
   AddPostIconStyle: {
     height: moderateScale(16),
@@ -328,7 +358,7 @@ const localStyles = StyleSheet.create({
     width: moderateScale(58),
     height: moderateScale(80),
     marginRight: moderateScale(10),
-    marginBottom: moderateScale(20), // Adjust this value to move the Add Post icon down
+    marginBottom: moderateScale(20),
   },
   contentContainerStyle: {
     ...styles.p15,
@@ -343,5 +373,13 @@ const localStyles = StyleSheet.create({
     width: '28%',
     marginTop: 5,
     marginLeft: 15,
+  },
+  userFullName: {
+    marginTop: moderateScale(5),
+    color: '#000',
+    textAlign: 'center',
+    fontSize: moderateScale(12),
+    fontWeight: 'bold',
+    fontFamily:'Arial',
   },
 });

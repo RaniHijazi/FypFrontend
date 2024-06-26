@@ -1,4 +1,4 @@
-import React, {useState, useRef} from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -15,41 +15,45 @@ import Octicons from 'react-native-vector-icons/Octicons';
 import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
 import LinearGradient from 'react-native-linear-gradient';
 import Video from 'react-native-video';
-import {useNavigation} from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 
 //custom imports
-import {useSelector} from 'react-redux';
+import { useSelector } from 'react-redux';
 import CText from '../../../components/common/CText';
-import {userStoryData} from '../../../api/constant';
-import {getHeight, moderateScale, screenWidth} from '../../../common/constants';
-import {styles} from '../../../themes';
-import {secondsToMilliseconds} from '../../../utils/asyncstorage';
-import {SendIcon} from '../../../assets/svgs';
+import { getHeight, moderateScale, screenWidth } from '../../../common/constants';
+import { styles } from '../../../themes';
+import { secondsToMilliseconds } from '../../../utils/asyncstorage';
+import { SendIcon } from '../../../assets/svgs';
 import CKeyBoardAvoidWrapper from '../../../components/common/CKeyBoardAvoidWrapper';
-const {width, height} = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
-function StoryView({route}) {
-  const img = route.params.img;
+function StoryView({ route }) {
+  const { users, initialUserIndex } = route.params;
   const navigation = useNavigation();
   const colors = useSelector(state => state.theme.theme);
 
-  const [content, setContent] = useState(userStoryData);
+  const [currentUserIndex, setCurrentUserIndex] = useState(initialUserIndex);
+  const [content, setContent] = useState(users[initialUserIndex].stories);
   const [end, setEnd] = useState(0);
   const [current, setCurrent] = useState(0);
   const [load, setLoad] = useState(false);
-  const [story, setStory] = useState(false);
+  const [story, setStory] = useState('');
   const progress = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    play();
+  }, [current]);
 
   // start() is for starting the animation bars at the top
   function start(n) {
-    if (content[current].type == 'video') {
+    if (content[current].storyPath.endsWith('.mp4')) {
       // type video
       if (load) {
         Animated.timing(progress, {
           toValue: 1,
           duration: n,
           useNativeDriver: false,
-        }).start(({finished}) => {
+        }).start(({ finished }) => {
           if (finished) {
             onPressNext();
           }
@@ -61,7 +65,7 @@ function StoryView({route}) {
         toValue: 1,
         duration: 5000,
         useNativeDriver: false,
-      }).start(({finished}) => {
+      }).start(({ finished }) => {
         if (finished) {
           onPressNext();
         }
@@ -85,7 +89,20 @@ function StoryView({route}) {
       progress.setValue(0);
       setLoad(false);
     } else {
-      // the next content is empty
+      // the next content is empty, go to next user
+      onNextUser();
+    }
+  }
+
+  // handle transitioning to the next user
+  function onNextUser() {
+    if (currentUserIndex !== users.length - 1) {
+      setCurrentUserIndex(currentUserIndex + 1);
+      setContent(users[currentUserIndex + 1].stories);
+      setCurrent(0);
+      progress.setValue(0);
+      setLoad(false);
+    } else {
       onCloseStory();
     }
   }
@@ -101,7 +118,20 @@ function StoryView({route}) {
       progress.setValue(0);
       setLoad(false);
     } else {
-      // the previous content is empty
+      // the previous content is empty, go to previous user
+      onPreviousUser();
+    }
+  }
+
+  // handle transitioning to the previous user
+  function onPreviousUser() {
+    if (currentUserIndex > 0) {
+      setCurrentUserIndex(currentUserIndex - 1);
+      setContent(users[currentUserIndex - 1].stories);
+      setCurrent(users[currentUserIndex - 1].stories.length - 1);
+      progress.setValue(0);
+      setLoad(false);
+    } else {
       onCloseStory();
     }
   }
@@ -156,25 +186,25 @@ function StoryView({route}) {
       <StatusBar backgroundColor="black" barStyle="light-content" />
       <CKeyBoardAvoidWrapper contentContainerStyle={styles.flexGrow1}>
         <View style={localStyles.backgroundContainer}>
-          {content[current].type == 'video' ? (
+          {content[current].storyPath.endsWith('.mp4') ? (
             <Video
               source={{
-                uri: content[current].content,
+                uri: content[current].storyPath,
               }}
               rate={1.0}
               volume={1.0}
               resizeMode="cover"
               onReadyForDisplay={play()}
               onLoad={onLoadVideo}
-              style={{height: height, width: width}}
+              style={{ height: height, width: width }}
             />
           ) : (
             <Image
               onLoadEnd={onLoadEndImage}
               source={{
-                uri: content[current].content,
+                uri: content[current].storyPath,
               }}
-              style={{width: width, height: height, resizeMode: 'cover'}}
+              style={{ width: width, height: height, resizeMode: 'cover' }}
             />
           )}
         </View>
@@ -185,10 +215,9 @@ function StoryView({route}) {
           />
           {/* ANIMATION BARS */}
           <View style={localStyles.animationBar}>
-            {content.map((index, key) => {
+            {content.map((item, key) => {
               return (
                 <View key={key} style={localStyles.barItemContainer}>
-                  {/* THE ANIMATION OF THE BAR*/}
                   <Animated.View
                     style={{
                       flex: current == key ? progress : content[key].finish,
@@ -206,9 +235,9 @@ function StoryView({route}) {
           <View style={localStyles.header}>
             {/* THE AVATAR AND USERNAME  */}
             <View style={localStyles.userAvatarContainer}>
-              {!!img && <Image style={localStyles.userImage} source={img} />}
+              <Image style={localStyles.userImage} source={{ uri: users[currentUserIndex].userProfileImageUrl }} />
               <CText type={'S14'} style={styles.pl10}>
-                {'You'}
+                {users[currentUserIndex].userFullName}
               </CText>
             </View>
             {/* END OF THE AVATAR AND USERNAME */}
@@ -284,7 +313,7 @@ const localStyles = StyleSheet.create({
     height: getHeight(50),
     ...styles.ph15,
   },
-  userAvatarContainer: {flexDirection: 'row', alignItems: 'center'},
+  userAvatarContainer: { flexDirection: 'row', alignItems: 'center' },
   userImage: {
     height: moderateScale(30),
     width: moderateScale(30),
