@@ -22,13 +22,32 @@ import PopularCategory from '../../../components/HomeComponent/PopularCategory';
 import CHeader from '../../../components/common/CHeader';
 import { profileListData, userImageData } from '../../../api/constant';
 import { moderateScale, screenWidth, API_BASE_URL } from '../../../common/constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function OtherPersonProfile({ route }) {
   const { item, postUserId } = route?.params;
   const colors = useSelector(state => state.theme.theme);
   const [follow, setFollow] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
-  const [posts, setPosts] = useState([]); // State variable to hold the user's posts
+  const [posts, setPosts] = useState([]);
+  const [userId, setUserId] = useState(null);
+
+  useEffect(() => {
+    const retrieveUserId = async () => {
+      try {
+        const storedUserId = await AsyncStorage.getItem('userId');
+        if (storedUserId !== null) {
+          const userIdInt = parseInt(storedUserId, 10);
+          setUserId(userIdInt);
+          console.log('Retrieved userId:', userIdInt);
+        }
+      } catch (error) {
+        console.error('Error retrieving userId from AsyncStorage:', error);
+      }
+    };
+
+    retrieveUserId();
+  }, []);
 
   useEffect(() => {
     const fetchUserProfileById = async () => {
@@ -39,6 +58,7 @@ export default function OtherPersonProfile({ route }) {
         }
         const data = await response.json();
         setUserProfile(data);
+        console.log('Fetched user profile:', data);
       } catch (error) {
         console.error('There was a problem with the fetch operation:', error);
       }
@@ -46,10 +66,14 @@ export default function OtherPersonProfile({ route }) {
 
     const checkIfFollowing = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/User/${postUserId}/isFollowing/${item.id}`);
+        console.log(`Checking if user ${userId} is following user ${postUserId}...`);
+        const response = await fetch(`${API_BASE_URL}/api/User/${userId}/isFollowing/${postUserId}`);
+        if (!response.ok) {
+          throw new Error(`Server responded with status ${response.status}`);
+        }
         const isFollowing = await response.json();
         setFollow(isFollowing);
-        console.log(isFollowing);
+        console.log('Follow status:', isFollowing);
       } catch (error) {
         console.error('There was a problem checking the follow status:', error);
       }
@@ -63,15 +87,18 @@ export default function OtherPersonProfile({ route }) {
         }
         const data = await response.json();
         setPosts(data);
+        console.log('Fetched posts:', data);
       } catch (error) {
         console.error('Error fetching posts:', error);
       }
     };
 
-    fetchUserProfileById();
-    checkIfFollowing();
-    fetchProfilePosts(postUserId); // Fetch the user's posts
-  }, [item.id, postUserId]);
+    if (userId) {
+      fetchUserProfileById();
+      checkIfFollowing();
+      fetchProfilePosts(postUserId);
+    }
+  }, [userId, postUserId]);
 
   const onPressFollow = async () => {
     try {
@@ -79,16 +106,26 @@ export default function OtherPersonProfile({ route }) {
         ? `${API_BASE_URL}/api/User/unfollow`
         : `${API_BASE_URL}/api/User/follow`;
 
+      const requestBody = { followerId: userId, followedId: postUserId };
+
       const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ followerId: postUserId, followedId: item.id }),
+        body: JSON.stringify(requestBody),
       });
 
       if (response.ok) {
+        // Update the local userProfile state
+        setUserProfile(prevProfile => ({
+          ...prevProfile,
+          totalFollowers: follow ? prevProfile.totalFollowers - 1 : prevProfile.totalFollowers + 1,
+        }));
+
+        // Toggle follow state
         setFollow(!follow);
+        console.log('Follow/unfollow operation successful:', !follow);
       } else {
         throw new Error('Network response was not ok');
       }

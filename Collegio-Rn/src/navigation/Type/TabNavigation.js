@@ -125,14 +125,14 @@ export default function TabNavigation({navigation}) {
         }}
       />
       <Tab.Screen
-              name={TabNav.CommunitiesTab}
-              component={TabRoute.CommunitiesTab}
-              options={{
-                tabBarIcon: ({focused}) => (
-                  <TabDot focused={focused} icon={<CommunityIcon />} isCommunity={true} />
-                ),
-              }}
-            />
+        name={TabNav.CommunitiesTab}
+        component={TabRoute.CommunitiesTab}
+        options={{
+          tabBarIcon: ({focused}) => (
+            <TabDot focused={focused} icon={<CommunityIcon />} isCommunity={true} />
+          ),
+        }}
+      />
     </Tab.Navigator>
   );
 }

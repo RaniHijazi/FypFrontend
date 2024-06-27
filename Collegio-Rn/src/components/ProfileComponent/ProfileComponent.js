@@ -1,16 +1,15 @@
+import React, { useEffect, useState } from 'react';
 import {
-  Image,
+  View,
   ImageBackground,
   StyleSheet,
+  Image,
   TouchableOpacity,
-  View,
-  ActivityIndicator,
 } from 'react-native';
-import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import images from '../../assets/images';
 import { styles } from '../../themes';
@@ -24,29 +23,43 @@ import { StackNav } from '../../navigation/NavigationKeys';
 export default function ProfileComponent() {
   const colors = useSelector((state) => state.theme.theme);
   const navigation = useNavigation();
-
   const [profile, setProfile] = useState(null);
 
-
   useEffect(() => {
-    const userId = 5;
-
-    fetch(`${API_BASE_URL}/api/User/${userId}/profile`)
-      .then((response) => response.json())
-      .then((data) => {
-        setProfile(data);
-
-      })
-      .catch((error) => {
-        console.error('Error fetching profile:', error);
-
-      });
+    retrieveUserId(); // Fetch user profile once component mounts
   }, []);
+
+  const retrieveUserId = async () => {
+    try {
+      const storedUserId = await AsyncStorage.getItem('userId');
+      if (storedUserId !== null) {
+        const userIdInt = parseInt(storedUserId, 10);
+        fetchUserProfile(userIdInt);
+      } else {
+        console.warn('User ID not found in AsyncStorage');
+      }
+    } catch (error) {
+      console.error('Error retrieving userId from AsyncStorage:', error);
+    }
+  };
+
+  const fetchUserProfile = async (userId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/User/${userId}/profile`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch user profile');
+      }
+      const data = await response.json();
+      setProfile(data);
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    }
+  };
 
   const onPressEditProfile = () => {
     navigation.navigate(StackNav.Setting);
   };
-console.log(profile);
+
   const RenderComponent = ({ title, text }) => (
     <TouchableOpacity
       style={[
@@ -69,13 +82,11 @@ console.log(profile);
     </TouchableOpacity>
   );
 
-
-
   if (!profile) {
     return (
       <View style={styles.center}>
         <CText type={'m14'} align={'center'} color={colors.grayScale5}>
-          Error loading profile data
+          Loading profile...
         </CText>
       </View>
     );
@@ -90,7 +101,7 @@ console.log(profile);
           end={{ x: 1, y: 1 }}
           style={localStyles.itemInnerContainer}
         >
-          <Image source={{ uri: profile.profilePath  }} style={localStyles.userImgStyle} />
+          <Image source={{ uri: profile.profilePath }} style={localStyles.userImgStyle} />
         </LinearGradient>
       </ImageBackground>
       <View style={styles.ph20}>
