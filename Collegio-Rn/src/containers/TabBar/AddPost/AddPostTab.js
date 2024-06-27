@@ -1,27 +1,28 @@
-import {Image, StyleSheet, TouchableOpacity, View, Alert, ActivityIndicator} from 'react-native';
-import React, {useState, useEffect} from 'react';
-import {useSelector} from 'react-redux';
+import { Image, StyleSheet, TouchableOpacity, View, Alert, ActivityIndicator, Modal, Text } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import CSafeAreaView from '../../../components/common/CSafeAreaView';
 import CText from '../../../components/common/CText';
 import CHeader from '../../../components/common/CHeader';
 import strings from '../../../i18n/strings';
-import {TabNav} from '../../../navigation/NavigationKeys';
-import {styles} from '../../../themes';
-import { moderateScale, screenWidth, API_BASE_URL } from '../../../common/constants';
+import { TabNav } from '../../../navigation/NavigationKeys';
+import { styles } from '../../../themes';
+import { moderateScale, API_BASE_URL } from '../../../common/constants';
 import CKeyBoardAvoidWrapper from '../../../components/common/CKeyBoardAvoidWrapper';
 import CInput from '../../../components/common/CInput';
 import images from '../../../assets/images';
 import AddPost from './AddPost';
 
-export default function AddPostTab({navigation}) {
+export default function AddPostTab({ navigation }) {
   const colors = useSelector(state => state.theme.theme);
   const [post, setPost] = useState('');
   const [selectPost, setSelectPost] = useState(true);
   const [image, setImage] = useState(null);
   const [userId, setUserId] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [imagePreviewVisible, setImagePreviewVisible] = useState(false);
 
   useEffect(() => {
     const retrieveUserId = async () => {
@@ -50,14 +51,60 @@ export default function AddPostTab({navigation}) {
 
   const onPressPost = () => {
     setSelectPost(true);
+    setImage(null);
   };
 
   const onPressStory = () => {
     setSelectPost(false);
+    setImage(null);
   };
 
   const onImageSelected = selectedImage => {
     setImage(selectedImage);
+    setImagePreviewVisible(true); // Show the modal when an image is selected
+  };
+
+  const onSubmitStory = async () => {
+    if (!userId) {
+      Alert.alert('Error', 'User ID not found');
+      return;
+    }
+
+    setLoading(true);
+
+    const formData = new FormData();
+    if (image) {
+      formData.append('Story', {
+        uri: image.path,
+        type: image.mime,
+        name: 'story.jpg',
+      });
+    }
+    formData.append('UserId', userId);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/User/uploadStory`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        body: formData,
+      });
+
+      if (response.ok) {
+        Alert.alert('Success', 'Story uploaded successfully');
+        setImage(null);
+        setImagePreviewVisible(false);
+        navigation.navigate(TabNav.HomeTab, { refresh: true }); // Add refresh param
+      } else {
+        const errorData = await response.json();
+        Alert.alert('Error', errorData.message || 'Failed to upload story');
+      }
+    } catch (error) {
+      Alert.alert('Error', error.message || 'Failed to upload story');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const onSubmitPost = async () => {
@@ -91,6 +138,8 @@ export default function AddPostTab({navigation}) {
 
       if (response.ok) {
         Alert.alert('Success', 'Post created successfully');
+        setImage(null);
+        setImagePreviewVisible(false);
         navigation.navigate(TabNav.HomeTab, { refresh: true }); // Add refresh param
       } else {
         const errorData = await response.json();
@@ -100,6 +149,14 @@ export default function AddPostTab({navigation}) {
       Alert.alert('Error', error.message || 'Failed to create post');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const onSubmit = () => {
+    if (selectPost) {
+      onSubmitPost();
+    } else {
+      onSubmitStory();
     }
   };
 
@@ -122,10 +179,10 @@ export default function AddPostTab({navigation}) {
   const RightIcon = () => {
     return (
       <TouchableOpacity
-        onPress={onSubmitPost}
+        onPress={onSubmit}
         style={[
           localStyles.publishContainer,
-          {backgroundColor: colors.dark ? colors.primary : colors.black},
+          { backgroundColor: colors.dark ? colors.primary : colors.black },
         ]}>
         <CText type={'b14'} numberOfLines={1} color={colors.white}>
           {strings.publish}
@@ -158,7 +215,7 @@ export default function AddPostTab({navigation}) {
         <View
           style={[
             localStyles.topContainer,
-            {backgroundColor: colors.placeholderColor},
+            { backgroundColor: colors.placeholderColor },
           ]}>
           <TouchableOpacity
             style={[
@@ -206,6 +263,27 @@ export default function AddPostTab({navigation}) {
             <ActivityIndicator size="large" color={colors.primary} />
           </View>
         )}
+        <Modal
+          visible={imagePreviewVisible}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setImagePreviewVisible(false)}
+        >
+          <View style={localStyles.modalContainer}>
+            {image && (
+              <Image
+                source={{ uri: image.path }}
+                style={localStyles.fullScreenImage}
+              />
+            )}
+            <TouchableOpacity
+              style={localStyles.nextButton}
+              onPress={() => setImagePreviewVisible(false)}
+            >
+              <Text style={localStyles.nextButtonText}>Next</Text>
+            </TouchableOpacity>
+          </View>
+        </Modal>
       </CKeyBoardAvoidWrapper>
     </CSafeAreaView>
   );
@@ -257,5 +335,29 @@ const localStyles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'black',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fullScreenImage: {
+    width: '100%',
+    height: '90%',
+    resizeMode: 'contain',
+  },
+  nextButton: {
+    position: 'absolute',
+    bottom: moderateScale(20),
+    right: moderateScale(20),
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    paddingVertical: moderateScale(10),
+    paddingHorizontal: moderateScale(20),
+    borderRadius: moderateScale(5),
+  },
+  nextButtonText: {
+    color: 'white',
+    fontSize: moderateScale(18),
   },
 });
