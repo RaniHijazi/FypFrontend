@@ -36,6 +36,9 @@ import ConfirmDelete from '../containers/TabBar/Profile/ConfirmDelete';
 import AccountDeleted from '../containers/TabBar/Profile/AccountDeleted';
 import changePassword from '../containers/TabBar/Profile/ChangePassword';
 import Documents from '../containers/TabBar/Profile/Documents';
+import CreateChat from '../components/HomeComponent/CreateChat';
+import CreateGroupScreen from '../components/HomeComponent/CreateGroupScreen';
+
 
 
 export const StackRoute = {
@@ -56,6 +59,8 @@ export const StackRoute = {
   changePassword,
   MajorsTab,
   Documents,
+  CreateChat,
+  CreateGroupScreen,
 
 
 };

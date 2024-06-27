@@ -43,7 +43,7 @@ export default function HomeTab({ navigation, route }) {
     try {
       const response = await fetch(`${API_BASE_URL}/api/User/${id}`);
       if (!response.ok) {
-        throw new Error('Failed to fetch user data');
+        throw new Error(`Failed to fetch user data: ${response.statusText}`);
       }
 
       const userData = await response.json();
@@ -52,7 +52,7 @@ export default function HomeTab({ navigation, route }) {
       fetchPrePosts(userData.communityId);
       console.log(profilePath);
     } catch (error) {
-      console.error('Error fetching user data:', error);
+      console.error('Error fetching user data:', error.message);
       setLoading(false);
       setIsRefreshing(false);
     }
@@ -62,14 +62,14 @@ export default function HomeTab({ navigation, route }) {
     try {
       const response = await fetch(`${API_BASE_URL}/api/Post/PrePosts?PreCommunityId=${communityId}`);
       if (!response.ok) {
-        throw new Error('Failed to fetch posts');
+        throw new Error(`Failed to fetch posts: ${response.statusText}`);
       }
       const data = await response.json();
       setPosts(data);
       setLoading(false);
       setIsRefreshing(false);
     } catch (error) {
-      console.error('Error fetching posts:', error);
+      console.error('Error fetching posts:', error.message);
       setLoading(false);
       setIsRefreshing(false);
     }
@@ -79,13 +79,13 @@ export default function HomeTab({ navigation, route }) {
     try {
       const response = await fetch(`${API_BASE_URL}/api/User/${userId}/getFollowingStories`);
       if (!response.ok) {
-        throw new Error('Failed to fetch stories');
+        throw new Error(`Failed to fetch stories: ${response.statusText}`);
       }
       const data = await response.json();
       setStories(data);
       groupStoriesByUser(data);
     } catch (error) {
-      console.error('Error fetching stories:', error);
+      console.error('Error fetching stories:', error.message);
     }
   };
 

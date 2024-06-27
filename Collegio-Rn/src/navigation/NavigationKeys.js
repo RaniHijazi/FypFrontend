@@ -18,6 +18,8 @@ export const StackNav = {
    FacultiesTab:'FacultiesTab',
    MajorsTab:'MajorsTab',
    Documents:'Documents',
+   CreateChat:'CreateChat',
+   CreateGroupScreen:'CreateGroupScreen',
 
 
 };

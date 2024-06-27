@@ -35,36 +35,44 @@ export default function SignIn({ navigation }) {
   };
 
   const onPressSignIn = async () => {
-    try {
-      const response = await fetch('${API_BASE_URL}/api/User/signin', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          fullName: fullName,
-          password: password,
-        }),
-      });
-      console.log("i reached here");
-      if (!response.ok) {
-        const data = await response.json();
-        setError(data.error);
-        throw new Error(data.error);
-      }
-       const data = await response.json();
+      try {
+          console.log("Starting sign-in process...");
+
+          const response = await fetch(`${API_BASE_URL}/api/User/signin`, {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                  fullName: fullName,
+                  password: password,
+              }),
+          });
+
+          console.log("Request made to API...");
+
+          if (!response.ok) {
+              const data = await response.json();
+              setError(data.error);
+              console.error('Error response from API:', data.error);
+              throw new Error(data.error);
+          }
+
+          const data = await response.json();
           const userId = data.user.id;
-          console.log(userId);
-      await StoreLoginData(true);
-      await AsyncStorage.setItem('userId', userId.toString());
-      navigation.reset({
-        index: 0,
-        routes: [{ name: StackNav.TabBar, params: { userId: userId } }],
-      });
-    } catch (error) {
-      console.error('Error signing in:', error);
-    }
+          console.log("User signed in successfully, userId:", userId);
+
+          await StoreLoginData(true);
+          await AsyncStorage.setItem('userId', userId.toString());
+          navigation.reset({
+              index: 0,
+              routes: [{ name: StackNav.TabBar, params: { userId: userId } }],
+          });
+      } catch (error) {
+          console.error('Error signing in:', error);
+      }
   };
+
 
   const onPressForgotPassword = () => {
     navigation.navigate(AuthNav.ForgotPassword);
