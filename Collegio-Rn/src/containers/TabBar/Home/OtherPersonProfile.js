@@ -11,7 +11,6 @@ import {
 import LinearGradient from 'react-native-linear-gradient';
 import { useSelector } from 'react-redux';
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { styles } from '../../../themes';
 import CSafeAreaView from '../../../components/common/CSafeAreaView';
 import PostComponent from '../../../components/HomeComponent/PostComponent';
@@ -25,33 +24,16 @@ import { profileListData, userImageData } from '../../../api/constant';
 import { moderateScale, screenWidth, API_BASE_URL } from '../../../common/constants';
 
 export default function OtherPersonProfile({ route }) {
-  const item = route?.params?.item;
+  const { item, postUserId } = route?.params;
   const colors = useSelector(state => state.theme.theme);
   const [follow, setFollow] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
-  const  [userId, setUserId] = useState(null);
+  const [posts, setPosts] = useState([]); // State variable to hold the user's posts
 
   useEffect(() => {
-      const retrieveUserId = async () => {
-        try {
-          const storedUserId = await AsyncStorage.getItem('userId');
-          if (storedUserId !== null) {
-            const userIdInt = parseInt(storedUserId, 10);
-            setUserId(userIdInt);
-            console.log('Retrieved userId:', userIdInt);
-            fetchUserById(userIdInt);
-          }
-        } catch (error) {
-          console.error('Error retrievingg userId from AsyncStorage:', error);
-        }
-      };
-          retrieveUserId();
-        }, []);
-
-  useEffect(() => {
-    const fetchUserProfile = async () => {
+    const fetchUserProfileById = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/User/${item.id}/profile`);
+        const response = await fetch(`${API_BASE_URL}/api/User/${postUserId}/profile`);
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
@@ -64,19 +46,32 @@ export default function OtherPersonProfile({ route }) {
 
     const checkIfFollowing = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/User/${userId}/isFollowing/${item.id}`);
+        const response = await fetch(`${API_BASE_URL}/api/User/${postUserId}/isFollowing/${item.id}`);
         const isFollowing = await response.json();
         setFollow(isFollowing);
         console.log(isFollowing);
-        console.log(userId);
       } catch (error) {
         console.error('There was a problem checking the follow status:', error);
       }
     };
 
-    fetchUserProfile();
+    const fetchProfilePosts = async (userId) => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/Post/user/${userId}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch posts');
+        }
+        const data = await response.json();
+        setPosts(data);
+      } catch (error) {
+        console.error('Error fetching posts:', error);
+      }
+    };
+
+    fetchUserProfileById();
     checkIfFollowing();
-  }, [item.id, userId]);
+    fetchProfilePosts(postUserId); // Fetch the user's posts
+  }, [item.id, postUserId]);
 
   const onPressFollow = async () => {
     try {
@@ -89,7 +84,7 @@ export default function OtherPersonProfile({ route }) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ followerId: userId, followedId: item.id }),
+        body: JSON.stringify({ followerId: postUserId, followedId: item.id }),
       });
 
       if (response.ok) {
@@ -169,35 +164,32 @@ export default function OtherPersonProfile({ route }) {
         </ImageBackground>
         <View style={styles.ph20}>
           <CText
-                    type={'b18'}
-                    align={'center'}
-                    style={localStyles.contentStyle}
-                    numberOfLines={1}
-                    color={colors.mainColor}
-                  >
-                    {userProfile.fullName}
-                  </CText>
-                  <CText
-                    type={'m14'}
-                    align={'center'}
-                    style={styles.mv10}
-                    numberOfLines={1}
-                    color={colors.grayScale5}
-                  >
-                    {userProfile.bio}
-                  </CText>
-                  <CText
-                    type={'m14'}
-                    align={'center'}
-                    style={styles.mb10}
-                    numberOfLines={1}
-                    color={colors.mainColor}
-                  >
-                    {userProfile.role}
-                  </CText>
+            type={'b18'}
+            align={'center'}
+            style={localStyles.contentStyle}
+            numberOfLines={1}
+            color={colors.mainColor}>
+            {userProfile.fullName}
+          </CText>
+          <CText
+            type={'m14'}
+            align={'center'}
+            style={styles.mv10}
+            numberOfLines={1}
+            color={colors.grayScale5}>
+            {userProfile.bio}
+          </CText>
+          <CText
+            type={'m14'}
+            align={'center'}
+            style={styles.mb10}
+            numberOfLines={1}
+            color={colors.mainColor}>
+            {userProfile.role}
+          </CText>
           <View style={styles.rowSpaceBetween}>
             <RenderComponent title={userProfile.totalFollowers} text={'Followers'} />
-             <RenderComponent title={userProfile.totalFollowing} text={'Following'} />
+            <RenderComponent title={userProfile.totalFollowing} text={'Following'} />
             <CButton
               title={follow ? strings.following : strings.follow}
               textType={'s14'}
@@ -231,7 +223,12 @@ export default function OtherPersonProfile({ route }) {
             textColor={colors.primaryLight}
             bgColor={colors.placeholderColor}
           />
-          <PostComponent item={item} />
+          <FlatList
+            data={posts}
+            renderItem={({ item }) => <PostComponent item={item} />}
+            keyExtractor={(item, index) => index.toString()}
+            showsVerticalScrollIndicator={false}
+          />
         </View>
       </ScrollView>
     </CSafeAreaView>

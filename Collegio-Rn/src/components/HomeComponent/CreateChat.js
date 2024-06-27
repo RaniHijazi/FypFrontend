@@ -32,7 +32,7 @@ export default function CreateChat({ navigation }) {
   const fetchUsers = async () => {
     try {
       console.log('Fetching users...');
-      const response = await fetch('http://172.20.10.3:7210/api/User/all');
+      const response = await fetch('http://192.168.0.103:7210/api/User/all');
       if (!response.ok) {
         throw new Error('Failed to fetch users');
       }

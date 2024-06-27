@@ -166,7 +166,11 @@ export default function HomeTab({ navigation, route }) {
   };
 
   const onPressUserProfile = item => {
-    navigation.navigate(StackNav.OtherPersonProfile, { item: item });
+    if (userId === item.userId) {
+      navigation.navigate(TabNav.ProfileTab);
+    } else {
+      navigation.navigate(StackNav.OtherPersonProfile, { item: item, postUserId: item.userId });
+    }
   };
 
   const onPressSendIcon = () => {
