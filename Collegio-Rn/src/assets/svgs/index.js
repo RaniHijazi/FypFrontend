@@ -23,6 +23,8 @@ import AttachmentDark from './attachmentDark.svg';
 import GalleryDark from './galleryDark.svg';
 import GifDark from './gifDark.svg';
 import OfficeIcon from './Office.svg';
+import CommunityIcon from './CommunityIcon.svg';
+
 export {
   HomeIcon,
   Notification,
@@ -49,4 +51,5 @@ export {
   GalleryDark,
   GifDark,
   OfficeIcon,
+  CommunityIcon,
 };

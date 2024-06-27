@@ -48,4 +48,5 @@ export const TabNav = {
   ProfileTab: 'ProfileTab',
   MajorsTab:'MajorsTab',
   FacultiesTab:'FacultiesTab',
+  CommunitiesTab:'CommunitiesTab',
 };

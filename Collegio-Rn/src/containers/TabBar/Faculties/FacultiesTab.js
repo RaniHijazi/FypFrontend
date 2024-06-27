@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { View, TextInput, StyleSheet, FlatList } from 'react-native';
+import { View, StyleSheet, FlatList } from 'react-native';
 import { useSelector } from 'react-redux';
 import { StackNav } from '../../../navigation/NavigationKeys';
-import { moderateScale,API_BASE_URL } from '../../../common/constants';
+import { moderateScale, API_BASE_URL } from '../../../common/constants';
 import images from '../../../assets/images';
 import CustomHeader from '../../../components/common/CustomHeader';
 import CSafeAreaView from '../../../components/common/CSafeAreaView';
@@ -35,21 +35,13 @@ export default function FacultiesTab({ navigation }) {
   );
 
   return (
-    <CSafeAreaView style={localStyles.safeArea}>
+    <CSafeAreaView style={[localStyles.safeArea, { backgroundColor: colors.background }]}>
       <CustomHeader
         title="Faculties"
         navigation={navigation}
-        searchBar={(
-          <View style={localStyles.searchContainer}>
-            <TextInput
-              style={localStyles.searchInput}
-              placeholder="Search..."
-              placeholderTextColor="#888"
-              value={searchQuery}
-              onChangeText={text => setSearchQuery(text)}
-            />
-          </View>
-        )}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        colors={colors}
       />
       <FlatList
         data={filteredFaculties}
@@ -65,27 +57,6 @@ export default function FacultiesTab({ navigation }) {
 const localStyles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: 'white',
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: moderateScale(20),
-    marginTop: moderateScale(20),
-  },
-  searchInput: {
-    flex: 1,
-    backgroundColor: 'white',
-    borderRadius: moderateScale(8),
-    paddingHorizontal: moderateScale(10),
-    height: moderateScale(40),
-    marginRight: moderateScale(10),
-  },
-  profileImage: {
-    width: moderateScale(10),
-    height: moderateScale(10),
-    borderRadius: moderateScale(20),
   },
   cardsContainer: {
     paddingHorizontal: moderateScale(10),

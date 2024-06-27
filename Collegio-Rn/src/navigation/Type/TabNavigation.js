@@ -3,13 +3,13 @@ import React from 'react';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import Octicons from 'react-native-vector-icons/Octicons';
 
-//custom imports
+// Custom imports
 import {TabNav} from '../NavigationKeys';
 import {TabRoute} from '../NavigationRoute';
 import {moderateScale} from '../../common/constants';
 import {styles} from '../../themes';
 import {useSelector} from 'react-redux';
-import {HomeIcon, Notification, ProfilePhoto, Search ,OfficeIcon} from '../../assets/svgs';
+import {HomeIcon, Notification, ProfilePhoto, Search, OfficeIcon, CommunityIcon} from '../../assets/svgs';
 
 export default function TabNavigation({navigation}) {
   const colors = useSelector(state => state.theme.theme);
@@ -19,10 +19,16 @@ export default function TabNavigation({navigation}) {
     navigation.navigate(TabNav.AddPostTab);
   };
 
-  const TabDot = ({focused, icon, messageDot}) => (
+  const TabDot = ({focused, icon, messageDot, isCommunity}) => (
     <View style={localStyles.tabViewContainer}>
       <View style={focused ? styles.mt30 : messageDot ? styles.mt15 : null}>
-        {icon}
+        {isCommunity ? (
+          <View style={localStyles.communityIconWrapper}>
+            {icon}
+          </View>
+        ) : (
+          icon
+        )}
       </View>
       {!focused && messageDot ? (
         <View
@@ -92,7 +98,6 @@ export default function TabNavigation({navigation}) {
           tabBarIcon: ({focused}) => <AddPostIcon />,
         }}
       />
-
       <Tab.Screen
         name={TabNav.NotificationTab}
         component={TabRoute.NotificationTab}
@@ -113,12 +118,21 @@ export default function TabNavigation({navigation}) {
           tabBarIcon: ({focused}) => (
             <TabDot
               focused={focused}
-              icon={<OfficeIcon/>}
+              icon={<OfficeIcon />}
               messageDot={false}
             />
           ),
         }}
       />
+      <Tab.Screen
+              name={TabNav.CommunitiesTab}
+              component={TabRoute.CommunitiesTab}
+              options={{
+                tabBarIcon: ({focused}) => (
+                  <TabDot focused={focused} icon={<CommunityIcon />} isCommunity={true} />
+                ),
+              }}
+            />
     </Tab.Navigator>
   );
 }
@@ -153,5 +167,8 @@ const localStyles = StyleSheet.create({
     width: moderateScale(6),
     borderRadius: moderateScale(3),
     ...styles.mt10,
+  },
+  communityIconWrapper: {
+    transform: [{ scale: 0.155 }], // Adjust the scale value as needed
   },
 });
