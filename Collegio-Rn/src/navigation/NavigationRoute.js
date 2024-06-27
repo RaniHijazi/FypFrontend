@@ -6,6 +6,8 @@ import AddPostTab from '../containers/TabBar/AddPost/AddPostTab';
 import NotificationTab from '../containers/TabBar/Notification/NotificationTab';
 import MajorsTab from '../containers/TabBar/Faculties/MajorsTab';
 import FacultiesTab from '../containers/TabBar/Faculties/FacultiesTab';
+import CommunitiesTab from '../containers/TabBar/Communities/CommunitiesTab';
+
 
 
 // Screens Route
@@ -88,4 +90,5 @@ export const TabRoute = {
   ProfileTab,
   MajorsTab,
   FacultiesTab,
+  CommunitiesTab,
 };

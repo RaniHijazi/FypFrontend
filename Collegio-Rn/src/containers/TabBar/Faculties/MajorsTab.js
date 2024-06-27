@@ -2,17 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { View, TextInput, StyleSheet } from 'react-native';
 import { useSelector } from 'react-redux';
 import { TabNav } from '../../../navigation/NavigationKeys';
-import { moderateScale, screenWidth, API_BASE_URL } from '../../../common/constants';
+import { moderateScale, API_BASE_URL } from '../../../common/constants';
 import CustomHeader from '../../../components/common/CustomHeader';
-import CHeader from '../../../components/common/CHeader';
 import CTable from '../../../components/common/CTable';
 import CSafeAreaView from '../../../components/common/CSafeAreaView';
-
 
 export default function MajorsTab({ route, navigation }) {
   const { facultyId } = route.params;
   const colors = useSelector(state => state.theme.theme);
   const [majors, setMajors] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const fetchMajors = async () => {
@@ -21,7 +20,7 @@ export default function MajorsTab({ route, navigation }) {
         const data = await response.json();
         setMajors(data);
       } catch (error) {
-        console.error(error);
+        console.error('Error fetching majors:', error);
       }
     };
 
@@ -32,21 +31,19 @@ export default function MajorsTab({ route, navigation }) {
     navigation.navigate(TabNav.ProfileTab);
   };
 
+  const handleSearchChange = (text) => {
+    setSearchQuery(text);
+    // You can implement search functionality here if needed
+  };
+
   return (
-    <CSafeAreaView style={localStyles.safeArea}>
-      <CHeader />
+    <CSafeAreaView style={[localStyles.safeArea, { backgroundColor: colors.background }]}>
       <CustomHeader
         title="Majors"
         navigation={navigation}
-        searchBar={
-          <View style={localStyles.searchContainer}>
-            <TextInput
-              style={localStyles.searchInput}
-              placeholder="Search..."
-              placeholderTextColor="#888"
-            />
-          </View>
-        }
+        searchQuery={searchQuery}
+        onSearchChange={handleSearchChange}
+        colors={colors}
       />
       <CTable data={majors} navigation={navigation} />
     </CSafeAreaView>
@@ -56,7 +53,6 @@ export default function MajorsTab({ route, navigation }) {
 const localStyles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: 'white',
   },
   searchContainer: {
     flexDirection: 'row',
