@@ -22,14 +22,32 @@ import PopularCategory from '../../../components/HomeComponent/PopularCategory';
 import CHeader from '../../../components/common/CHeader';
 import { profileListData, userImageData } from '../../../api/constant';
 import { moderateScale, screenWidth, API_BASE_URL } from '../../../common/constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function OtherPersonProfile({ route }) {
   const { item, postUserId } = route?.params;
   const colors = useSelector(state => state.theme.theme);
   const [follow, setFollow] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
-  const [posts, setPosts] = useState([]); // State variable to hold the user's posts
+  const [posts, setPosts] = useState([]);
+  const [userId, setUserId] = useState(null);
 
+ useEffect(() => {
+    const retrieveUserId = async () => {
+      try {
+        const storedUserId = await AsyncStorage.getItem('userId');
+        if (storedUserId !== null) {
+          const userIdInt = parseInt(storedUserId, 10);
+          setUserId(userIdInt);
+
+        }
+      } catch (error) {
+        console.error('Error retrieving userId from AsyncStorage:', error);
+      }
+    };
+
+    retrieveUserId();
+  }, []);
   useEffect(() => {
     const fetchUserProfileById = async () => {
       try {
@@ -46,7 +64,7 @@ export default function OtherPersonProfile({ route }) {
 
     const checkIfFollowing = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/User/${postUserId}/isFollowing/${item.id}`);
+        const response = await fetch(`${API_BASE_URL}/api/User/${userId}/isFollowing/${postUserId}`);
         const isFollowing = await response.json();
         setFollow(isFollowing);
         console.log(isFollowing);
@@ -79,15 +97,24 @@ export default function OtherPersonProfile({ route }) {
         ? `${API_BASE_URL}/api/User/unfollow`
         : `${API_BASE_URL}/api/User/follow`;
 
+      const requestBody = { followerId: userId, followedId: postUserId };
+
       const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ followerId: postUserId, followedId: item.id }),
+        body: JSON.stringify(requestBody),
       });
 
       if (response.ok) {
+        // Update the local userProfile state
+        setUserProfile(prevProfile => ({
+          ...prevProfile,
+          totalFollowers: follow ? prevProfile.totalFollowers - 1 : prevProfile.totalFollowers + 1,
+        }));
+
+        // Toggle follow state
         setFollow(!follow);
       } else {
         throw new Error('Network response was not ok');
@@ -96,7 +123,6 @@ export default function OtherPersonProfile({ route }) {
       console.error('There was a problem with the follow/unfollow operation:', error);
     }
   };
-
   const renderImgContainer = ({ item, index }) => (
     <View
       style={{
