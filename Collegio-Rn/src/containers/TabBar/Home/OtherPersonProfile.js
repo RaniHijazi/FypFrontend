@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   FlatList,
   Image,
@@ -9,9 +9,9 @@ import {
   View,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import { useSelector } from 'react-redux';
+import {useSelector} from 'react-redux';
 
-import { styles } from '../../../themes';
+import {styles} from '../../../themes';
 import CSafeAreaView from '../../../components/common/CSafeAreaView';
 import PostComponent from '../../../components/HomeComponent/PostComponent';
 import strings from '../../../i18n/strings';
@@ -20,26 +20,46 @@ import CText from '../../../components/common/CText';
 import CButton from '../../../components/common/CButton';
 import PopularCategory from '../../../components/HomeComponent/PopularCategory';
 import CHeader from '../../../components/common/CHeader';
-import { profileListData, userImageData } from '../../../api/constant';
-import { moderateScale, screenWidth, API_BASE_URL } from '../../../common/constants';
+import {profileListData, userImageData} from '../../../api/constant';
+import {
+  moderateScale,
+  screenWidth,
+  API_BASE_URL,
+} from '../../../common/constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function OtherPersonProfile({ route }) {
-  const { item, postUserId } = route?.params;
+export default function OtherPersonProfile({route}) {
+  const {item, postUserId} = route?.params;
   const colors = useSelector(state => state.theme.theme);
   const [follow, setFollow] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
   const [posts, setPosts] = useState([]);
   const [userId, setUserId] = useState(null);
 
- useEffect(() => {
+  useEffect(() => {
     const retrieveUserId = async () => {
       try {
         const storedUserId = await AsyncStorage.getItem('userId');
         if (storedUserId !== null) {
           const userIdInt = parseInt(storedUserId, 10);
           setUserId(userIdInt);
+          console.log('Retrieved userId:', userIdInt);
+        }
+      } catch (error) {
+        console.error('Error retrieving userId from AsyncStorage:', error);
+      }
+    };
 
+    retrieveUserId();
+  }, []);
+
+  useEffect(() => {
+    const retrieveUserId = async () => {
+      try {
+        const storedUserId = await AsyncStorage.getItem('userId');
+        if (storedUserId !== null) {
+          const userIdInt = parseInt(storedUserId, 10);
+          setUserId(userIdInt);
         }
       } catch (error) {
         console.error('Error retrieving userId from AsyncStorage:', error);
@@ -51,12 +71,15 @@ export default function OtherPersonProfile({ route }) {
   useEffect(() => {
     const fetchUserProfileById = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/User/${postUserId}/profile`);
+        const response = await fetch(
+          `${API_BASE_URL}/api/User/${postUserId}/profile`,
+        );
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
         const data = await response.json();
         setUserProfile(data);
+        console.log('Fetched user profile:', data);
       } catch (error) {
         console.error('There was a problem with the fetch operation:', error);
       }
@@ -64,16 +87,24 @@ export default function OtherPersonProfile({ route }) {
 
     const checkIfFollowing = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/User/${userId}/isFollowing/${postUserId}`);
+        console.log(
+          `Checking if user ${userId} is following user ${postUserId}...`,
+        );
+        const response = await fetch(
+          `${API_BASE_URL}/api/User/${userId}/isFollowing/${postUserId}`,
+        );
+        if (!response.ok) {
+          throw new Error(`Server responded with status ${response.status}`);
+        }
         const isFollowing = await response.json();
         setFollow(isFollowing);
-        console.log(isFollowing);
+        console.log('Follow status:', isFollowing);
       } catch (error) {
         console.error('There was a problem checking the follow status:', error);
       }
     };
 
-    const fetchProfilePosts = async (userId) => {
+    const fetchProfilePosts = async userId => {
       try {
         const response = await fetch(`${API_BASE_URL}/api/Post/user/${userId}`);
         if (!response.ok) {
@@ -81,15 +112,18 @@ export default function OtherPersonProfile({ route }) {
         }
         const data = await response.json();
         setPosts(data);
+        console.log('Fetched posts:', data);
       } catch (error) {
         console.error('Error fetching posts:', error);
       }
     };
 
-    fetchUserProfileById();
-    checkIfFollowing();
-    fetchProfilePosts(postUserId); // Fetch the user's posts
-  }, [item.id, postUserId]);
+    if (userId) {
+      fetchUserProfileById();
+      checkIfFollowing();
+      fetchProfilePosts(postUserId);
+    }
+  }, [userId, postUserId]);
 
   const onPressFollow = async () => {
     try {
@@ -97,7 +131,7 @@ export default function OtherPersonProfile({ route }) {
         ? `${API_BASE_URL}/api/User/unfollow`
         : `${API_BASE_URL}/api/User/follow`;
 
-      const requestBody = { followerId: userId, followedId: postUserId };
+      const requestBody = {followerId: userId, followedId: postUserId};
 
       const response = await fetch(url, {
         method: 'POST',
@@ -111,19 +145,25 @@ export default function OtherPersonProfile({ route }) {
         // Update the local userProfile state
         setUserProfile(prevProfile => ({
           ...prevProfile,
-          totalFollowers: follow ? prevProfile.totalFollowers - 1 : prevProfile.totalFollowers + 1,
+          totalFollowers: follow
+            ? prevProfile.totalFollowers - 1
+            : prevProfile.totalFollowers + 1,
         }));
 
         // Toggle follow state
         setFollow(!follow);
+        console.log('Follow/unfollow operation successful:', !follow);
       } else {
         throw new Error('Network response was not ok');
       }
     } catch (error) {
-      console.error('There was a problem with the follow/unfollow operation:', error);
+      console.error(
+        'There was a problem with the follow/unfollow operation:',
+        error,
+      );
     }
   };
-  const renderImgContainer = ({ item, index }) => (
+  const renderImgContainer = ({item, index}) => (
     <View
       style={{
         zIndex: 10,
@@ -131,25 +171,21 @@ export default function OtherPersonProfile({ route }) {
       }}>
       <LinearGradient
         colors={[colors.primaryLight, colors.linearColor1]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+        start={{x: 0, y: 0}}
+        end={{x: 1, y: 1}}
         style={localStyles.imgContainer}>
         <Image source={item} style={[localStyles.userImgContainerStyle]} />
       </LinearGradient>
     </View>
   );
 
-  const RenderComponent = ({ title, text }) => (
+  const RenderComponent = ({title, text}) => (
     <TouchableOpacity
       style={[
         localStyles.mainContentStyle,
-        { backgroundColor: colors.placeholderColor },
+        {backgroundColor: colors.placeholderColor},
       ]}>
-      <CText
-        type={'m14'}
-        align={'center'}
-        style={styles.mv5}
-        numberOfLines={1}>
+      <CText type={'m14'} align={'center'} style={styles.mv5} numberOfLines={1}>
         {title}
       </CText>
       <CText
@@ -183,9 +219,12 @@ export default function OtherPersonProfile({ route }) {
           <CHeader style={styles.p15} />
           <LinearGradient
             colors={[colors.primaryLight, colors.linearColor1]}
-            start={{ x: 0, y: 0 }}
+            start={{x: 0, y: 0}}
             style={localStyles.itemInnerContainer}>
-            <Image source={{ uri: userProfile.profilePath }} style={localStyles.userImgStyle} />
+            <Image
+              source={{uri: userProfile.profilePath}}
+              style={localStyles.userImgStyle}
+            />
           </LinearGradient>
         </ImageBackground>
         <View style={styles.ph20}>
@@ -214,8 +253,14 @@ export default function OtherPersonProfile({ route }) {
             {userProfile.role}
           </CText>
           <View style={styles.rowSpaceBetween}>
-            <RenderComponent title={userProfile.totalFollowers} text={'Followers'} />
-            <RenderComponent title={userProfile.totalFollowing} text={'Following'} />
+            <RenderComponent
+              title={userProfile.totalFollowers}
+              text={'Followers'}
+            />
+            <RenderComponent
+              title={userProfile.totalFollowing}
+              text={'Following'}
+            />
             <CButton
               title={follow ? strings.following : strings.follow}
               textType={'s14'}
@@ -226,7 +271,7 @@ export default function OtherPersonProfile({ route }) {
           <View
             style={[
               localStyles.eventStyle,
-              { backgroundColor: colors.placeholderColor },
+              {backgroundColor: colors.placeholderColor},
             ]}>
             <FlatList
               data={userImageData}
@@ -251,7 +296,7 @@ export default function OtherPersonProfile({ route }) {
           />
           <FlatList
             data={posts}
-            renderItem={({ item }) => <PostComponent item={item} />}
+            renderItem={({item}) => <PostComponent item={item} />}
             keyExtractor={(item, index) => index.toString()}
             showsVerticalScrollIndicator={false}
           />
