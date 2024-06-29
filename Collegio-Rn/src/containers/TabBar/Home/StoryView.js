@@ -9,6 +9,7 @@ import {
   StatusBar,
   TouchableOpacity,
   SafeAreaView,
+  Text,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Octicons from 'react-native-vector-icons/Octicons';
@@ -32,8 +33,11 @@ function StoryView({ route }) {
   const navigation = useNavigation();
   const colors = useSelector(state => state.theme.theme);
 
+  console.log('Users:', users);
+  console.log('Initial User Index:', initialUserIndex);
+
   const [currentUserIndex, setCurrentUserIndex] = useState(initialUserIndex);
-  const [content, setContent] = useState(users[initialUserIndex].stories);
+  const [content, setContent] = useState(users[initialUserIndex]?.stories || []);
   const [end, setEnd] = useState(0);
   const [current, setCurrent] = useState(0);
   const [load, setLoad] = useState(false);
@@ -41,13 +45,14 @@ function StoryView({ route }) {
   const progress = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    play();
+    console.log('Current User Stories:', content);
+    if (content.length > 0) {
+      play();
+    }
   }, [current]);
 
-  // start() is for starting the animation bars at the top
-  function start(n) {
-    if (content[current].storyPath.endsWith('.mp4')) {
-      // type video
+  const start = (n) => {
+    if (content[current]?.storyPath?.endsWith('.mp4')) {
       if (load) {
         Animated.timing(progress, {
           toValue: 1,
@@ -60,7 +65,6 @@ function StoryView({ route }) {
         });
       }
     } else {
-      // type image
       Animated.timing(progress, {
         toValue: 1,
         duration: 5000,
@@ -71,89 +75,79 @@ function StoryView({ route }) {
         }
       });
     }
-  }
+  };
 
-  // handle playing the animation
-  function play() {
+  const play = () => {
     start(end);
-  }
+  };
 
-  // next() is for changing the content of the current content to +1
-  function onPressNext() {
-    // check if the next content is not empty
-    if (current !== content.length - 1) {
-      let data = [...content];
+  const onPressNext = () => {
+    if (current < content.length - 1) {
+      const data = [...content];
       data[current].finish = 1;
       setContent(data);
       setCurrent(current + 1);
       progress.setValue(0);
       setLoad(false);
     } else {
-      // the next content is empty, go to next user
       onNextUser();
     }
-  }
+  };
 
-  // handle transitioning to the next user
-  function onNextUser() {
-    if (currentUserIndex !== users.length - 1) {
+  const onNextUser = () => {
+    if (currentUserIndex < users.length - 1) {
       setCurrentUserIndex(currentUserIndex + 1);
-      setContent(users[currentUserIndex + 1].stories);
+      setContent(users[currentUserIndex + 1]?.stories || []);
       setCurrent(0);
       progress.setValue(0);
       setLoad(false);
     } else {
       onCloseStory();
     }
-  }
+  };
 
-  // previous() is for changing the content of the current content to -1
-  function onPressPrevious() {
-    // checking if the previous content is not empty
-    if (current - 1 >= 0) {
-      let data = [...content];
+  const onPressPrevious = () => {
+    if (current > 0) {
+      const data = [...content];
       data[current].finish = 0;
       setContent(data);
       setCurrent(current - 1);
       progress.setValue(0);
       setLoad(false);
     } else {
-      // the previous content is empty, go to previous user
       onPreviousUser();
     }
-  }
+  };
 
-  // handle transitioning to the previous user
-  function onPreviousUser() {
+  const onPreviousUser = () => {
     if (currentUserIndex > 0) {
       setCurrentUserIndex(currentUserIndex - 1);
-      setContent(users[currentUserIndex - 1].stories);
-      setCurrent(users[currentUserIndex - 1].stories.length - 1);
+      setContent(users[currentUserIndex - 1]?.stories || []);
+      setCurrent(users[currentUserIndex - 1]?.stories.length - 1);
       progress.setValue(0);
       setLoad(false);
     } else {
       onCloseStory();
     }
-  }
+  };
 
-  // closing the modal set the animation progress to 0
-  function onCloseStory() {
+  const onCloseStory = () => {
     progress.setValue(0);
     setLoad(false);
     navigation.goBack();
-  }
+  };
 
   const onLoadEndImage = () => {
     progress.setValue(0);
     play();
   };
 
-  const onLoadVideo = status => {
+  const onLoadVideo = (status) => {
     setLoad(true);
     setEnd(secondsToMilliseconds(status.duration));
   };
 
-  const onChangeTextStory = text => {
+  const onChangeTextStory = (text) => {
     setStory(text);
   };
 
@@ -186,26 +180,30 @@ function StoryView({ route }) {
       <StatusBar backgroundColor="black" barStyle="light-content" />
       <CKeyBoardAvoidWrapper contentContainerStyle={styles.flexGrow1}>
         <View style={localStyles.backgroundContainer}>
-          {content[current].storyPath.endsWith('.mp4') ? (
-            <Video
-              source={{
-                uri: content[current].storyPath,
-              }}
-              rate={1.0}
-              volume={1.0}
-              resizeMode="cover"
-              onReadyForDisplay={play()}
-              onLoad={onLoadVideo}
-              style={{ height: height, width: width }}
-            />
+          {content.length > 0 ? (
+            content[current]?.storyPath ? (
+              content[current].storyPath.endsWith('.mp4') ? (
+                <Video
+                  source={{ uri: content[current].storyPath }}
+                  rate={1.0}
+                  volume={1.0}
+                  resizeMode="cover"
+                  onReadyForDisplay={play()}
+                  onLoad={onLoadVideo}
+                  style={{ height: height, width: width }}
+                />
+              ) : (
+                <Image
+                  onLoadEnd={onLoadEndImage}
+                  source={{ uri: content[current].storyPath }}
+                  style={{ width: width, height: height, resizeMode: 'cover' }}
+                />
+              )
+            ) : (
+              <Text style={{ color: 'white' }}>No content available</Text>
+            )
           ) : (
-            <Image
-              onLoadEnd={onLoadEndImage}
-              source={{
-                uri: content[current].storyPath,
-              }}
-              style={{ width: width, height: height, resizeMode: 'cover' }}
-            />
+            <Text style={{ color: 'white' }}>No content available</Text>
           )}
         </View>
         <View style={localStyles.mainContainer}>
@@ -215,41 +213,39 @@ function StoryView({ route }) {
           />
           {/* ANIMATION BARS */}
           <View style={localStyles.animationBar}>
-            {content.map((item, key) => {
-              return (
-                <View key={key} style={localStyles.barItemContainer}>
-                  <Animated.View
-                    style={{
-                      flex: current == key ? progress : content[key].finish,
-                      height: 2,
-                      backgroundColor: colors.white,
-                    }}
-                  />
-                </View>
-              );
-            })}
+            {content.map((item, key) => (
+              <View key={key} style={localStyles.barItemContainer}>
+                <Animated.View
+                  style={{
+                    flex: current === key ? progress : content[key]?.finish,
+                    height: 2,
+                    backgroundColor: colors.white,
+                  }}
+                />
+              </View>
+            ))}
           </View>
-
           {/* END OF ANIMATION BARS */}
-
           <View style={localStyles.header}>
-            {/* THE AVATAR AND USERNAME  */}
             <View style={localStyles.userAvatarContainer}>
-              <Image style={localStyles.userImage} source={{ uri: users[currentUserIndex].userProfileImageUrl }} />
+              {users[currentUserIndex]?.userProfileImageUrl ? (
+                <Image
+                  style={localStyles.userImage}
+                  source={{ uri: users[currentUserIndex]?.userProfileImageUrl }}
+                />
+              ) : (
+                <View style={[localStyles.placeholderImage, { backgroundColor: colors.gray }]} />
+              )}
               <CText type={'S14'} style={styles.pl10}>
-                {users[currentUserIndex].userFullName}
+                {users[currentUserIndex]?.userFullName}
               </CText>
             </View>
-            {/* END OF THE AVATAR AND USERNAME */}
-            {/* THE CLOSE BUTTON */}
             <TouchableOpacity onPress={onCloseStory}>
               <View style={localStyles.closeContainer}>
                 <Ionicons name="close" size={28} color="white" />
               </View>
             </TouchableOpacity>
-            {/* END OF CLOSE BUTTON */}
           </View>
-          {/* HERE IS THE HANDLE FOR PREVIOUS AND NEXT PRESS */}
           <View style={localStyles.nextPreviousContainer}>
             <TouchableWithoutFeedback onPress={onPressPrevious}>
               <View style={styles.flex} />
@@ -258,7 +254,7 @@ function StoryView({ route }) {
               <View style={styles.flex} />
             </TouchableWithoutFeedback>
           </View>
-          {/* END OF THE HANDLE FOR PREVIOUS AND NEXT PRESS */}
+          {/* Assuming CInput is a valid input component */}
           <CInput
             placeholder={strings.chatPlaceholder}
             inputContainerStyle={localStyles.inputContainerStyle}
@@ -318,6 +314,12 @@ const localStyles = StyleSheet.create({
     height: moderateScale(30),
     width: moderateScale(30),
     borderRadius: 25,
+  },
+  placeholderImage: {
+    height: moderateScale(30),
+    width: moderateScale(30),
+    borderRadius: 25,
+    backgroundColor: 'gray', // default gray color
   },
   header: {
     height: getHeight(50),

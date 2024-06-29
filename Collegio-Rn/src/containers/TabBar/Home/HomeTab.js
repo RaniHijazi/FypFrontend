@@ -33,6 +33,7 @@ export default function HomeTab({ navigation, route }) {
   const [posts, setPosts] = useState([]);
   const [stories, setStories] = useState([]);
   const [groupedStories, setGroupedStories] = useState([]);
+  const [userStories, setUserStories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [userId, setUserId] = useState(null);
@@ -50,7 +51,7 @@ export default function HomeTab({ navigation, route }) {
       setCommunityId(userData.communityId);
       setProfilePath(userData.profilePath);
       fetchPrePosts(userData.communityId);
-      console.log(profilePath);
+      fetchUserStories(id); // Fetch user-specific stories
     } catch (error) {
       console.error('Error fetching user data:', error.message);
       setLoading(false);
@@ -82,28 +83,56 @@ export default function HomeTab({ navigation, route }) {
         throw new Error(`Failed to fetch stories: ${response.statusText}`);
       }
       const data = await response.json();
-      setStories(data);
-      groupStoriesByUser(data);
+
+      // Verify and filter out stories with missing essential fields
+      const filteredData = data.filter(story => story.userId && story.userFullName && story.userProfileImageUrl && story.stories);
+
+      setStories(filteredData);
+      groupStoriesByUser(filteredData);
     } catch (error) {
       console.error('Error fetching stories:', error.message);
     }
   };
 
+  const fetchUserStories = async (userId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/User/${userId}/stories`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch user stories: ${response.statusText}`);
+      }
+      const data = await response.json();
+      // Add userId and userProfileImageUrl to each story
+      const userStoriesWithUserId = data.map(story => ({
+        ...story,
+        userId: userId,
+        userProfileImageUrl: profilePath, // Assuming profilePath is the user's profile image URL
+      }));
+
+      setUserStories(userStoriesWithUserId);
+    } catch (error) {
+      console.error('Error fetching user stories:', error.message);
+    }
+  };
+
+
+
   const groupStoriesByUser = (stories) => {
-    const grouped = stories.reduce((acc, story) => {
-      const userId = story.userId;
+    const grouped = stories.reduce((acc, user) => {
+      const userId = user.userId;
       if (!acc[userId]) {
         acc[userId] = {
           userId: userId,
-          userFullName: story.userFullName,
-          userProfileImageUrl: story.userProfileImageUrl,
+          userFullName: user.userFullName,
+          userProfileImageUrl: user.userProfileImageUrl,
           stories: [],
         };
       }
-      acc[userId].stories.push({
-        id: story.id,
-        storyPath: story.storyPath,
-        createdAt: story.createdAt,
+      user.stories.forEach(story => {
+        acc[userId].stories.push({
+          id: story.id,
+          storyPath: story.storyPath,
+          createdAt: story.createdAt,
+        });
       });
       return acc;
     }, {});
@@ -120,6 +149,7 @@ export default function HomeTab({ navigation, route }) {
           setUserId(userIdInt);
           fetchUserById(userIdInt);
           fetchStories(userIdInt);
+          fetchUserStories(userIdInt);
         }
       } catch (error) {
         console.error('Error retrieving userId from AsyncStorage:', error);
@@ -130,17 +160,16 @@ export default function HomeTab({ navigation, route }) {
   }, []);
 
   useEffect(() => {
-    if (isFocused) {
+    if (isFocused && userId) {
       if (communityId) {
         fetchPrePosts(communityId);
-      } else if (userId) {
+      } else {
         fetchUserById(userId);
       }
-      if (userId) {
-        fetchStories(userId);
-      }
+      fetchStories(userId);
+      fetchUserStories(userId);
     }
-  }, [isFocused, route.params?.refresh, communityId, userId]);
+  }, [isFocused, route.params?.refresh]);
 
   const handleRefresh = () => {
     setIsRefreshing(true);
@@ -151,6 +180,7 @@ export default function HomeTab({ navigation, route }) {
     }
     if (userId) {
       fetchStories(userId);
+      fetchUserStories(userId);
     }
   };
 
@@ -178,8 +208,27 @@ export default function HomeTab({ navigation, route }) {
   };
 
   const onPressStory = user => {
-    navigation.navigate(StackNav.StoryView, { user, users: groupedStories, initialUserIndex: groupedStories.findIndex(u => u.userId === user.userId) });
+    const initialUserIndex = groupedStories.findIndex(u => u.userId === user.userId);
+    if (initialUserIndex !== -1 || user.userId === userId) {
+      // If it's the current user's story, create a groupedStories entry for them
+      const userStoriesEntry = {
+        userId,
+        userFullName: 'Your story',
+        userProfileImageUrl: profilePath,
+        stories: userStories,
+      };
+      const allStories = initialUserIndex !== -1 ? groupedStories : [userStoriesEntry, ...groupedStories];
+      const index = initialUserIndex !== -1 ? initialUserIndex : 0;
+
+      navigation.navigate(StackNav.StoryView, {
+        users: allStories,
+        initialUserIndex: index,
+      });
+    } else {
+      console.error('User not found in groupedStories:', user);
+    }
   };
+
 
   const AddPostIcon = () => {
     return (
@@ -202,27 +251,44 @@ export default function HomeTab({ navigation, route }) {
 
   const renderItem = ({ item, index }) => {
     if (index === 0) {
-      return (
-        <View style={localStyles.addPostContainer}>
-          <Image
-            source={profilePath ? { uri: profilePath } : images.userImage1}
-            style={localStyles.adminImageStyle}
-          />
-          <AddPostIcon />
-          <Text style={localStyles.userFullName}>Your story</Text>
-        </View>
 
-      );
+      if (userStories.length > 0) {
+        return (
+          <TouchableOpacity
+            onPress={() => onPressStory({ userId, userFullName: "Your story", userProfileImageUrl: profilePath, stories: userStories })}
+            style={localStyles.addPostContainer}
+          >
+            <Image
+              source={profilePath ? { uri: profilePath } : images.userImage1}
+              style={localStyles.adminImageStyle}
+            />
+            <Text style={localStyles.userFullName}>Your story</Text>
+          </TouchableOpacity>
+        );
+      } else {
+        return (
+          <View style={localStyles.addPostContainer}>
+            <Image
+              source={profilePath ? { uri: profilePath } : images.userImage1}
+              style={localStyles.adminImageStyle}
+            />
+            <AddPostIcon />
+            <Text style={localStyles.userFullName}>Your story</Text>
+          </View>
+        );
+      }
     }
     return (
       <TouchableOpacity
         style={localStyles.mainStoryStyle}
-        onPress={() => onPressStory(item)}>
+        onPress={() => onPressStory(item)}
+      >
         <LinearGradient
           colors={[colors.primaryLight, colors.linearColor1]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={localStyles.itemInnerContainer}>
+          style={localStyles.itemInnerContainer}
+        >
           <Image
             source={{ uri: item.userProfileImageUrl }}
             style={[
@@ -335,7 +401,7 @@ const localStyles = StyleSheet.create({
   mainStoryStyle: {
     ...styles.mr10,
     alignItems: 'center',
-    marginTop:moderateScale(12),
+    marginTop: moderateScale(12),
   },
   itemInnerContainer: {
     padding: moderateScale(2),
@@ -345,7 +411,7 @@ const localStyles = StyleSheet.create({
     width: moderateScale(58),
     height: moderateScale(58),
     borderRadius: moderateScale(29),
-    marginTop:moderateScale(16),
+    marginTop: moderateScale(16),
   },
   AddPostIconStyle: {
     height: moderateScale(16),
@@ -384,6 +450,6 @@ const localStyles = StyleSheet.create({
     textAlign: 'center',
     fontSize: moderateScale(12),
     fontWeight: 'bold',
-    fontFamily:'Arial',
+    fontFamily: 'Arial',
   },
 });
