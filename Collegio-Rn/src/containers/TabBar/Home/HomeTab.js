@@ -225,22 +225,12 @@ export default function HomeTab({ navigation, route }) {
         initialUserIndex: index,
       });
     } else {
-      console.error('User not found in groupedStories:', user);
+      console.error('User not found in grouped Stories:', user);
     }
   };
 
-
-  const AddPostIcon = () => {
-    return (
-      <TouchableOpacity
-        style={[localStyles.AddPostIconStyle, { backgroundColor: colors.black }]}>
-        <Octicons
-          name={'plus'}
-          size={moderateScale(12)}
-          color={colors.primary}
-        />
-      </TouchableOpacity>
-    );
+  const navigateToAddPost = () => {
+    navigation.navigate(StackNav.AddPostTab);
   };
 
   const renderPostComponent = ({ item }) => {
@@ -272,7 +262,6 @@ export default function HomeTab({ navigation, route }) {
               source={profilePath ? { uri: profilePath } : images.userImage1}
               style={localStyles.adminImageStyle}
             />
-            <AddPostIcon />
             <Text style={localStyles.userFullName}>Your story</Text>
           </View>
         );
@@ -357,16 +346,23 @@ export default function HomeTab({ navigation, route }) {
       {loading ? (
         <ActivityIndicator size="large" color={colors.primary} />
       ) : (
-        <FlatList
-          data={posts}
-          renderItem={renderPostComponent}
-          ListHeaderComponent={<ListHeaderComponent />}
-          showsVerticalScrollIndicator={false}
-          keyExtractor={(item, index) => index.toString()}
-          contentContainerStyle={localStyles.contentContainerStyle}
-          refreshing={isRefreshing}
-          onRefresh={handleRefresh}
-        />
+        <>
+          <FlatList
+            data={posts}
+            renderItem={renderPostComponent}
+            ListHeaderComponent={<ListHeaderComponent />}
+            showsVerticalScrollIndicator={false}
+            keyExtractor={(item, index) => index.toString()}
+            contentContainerStyle={localStyles.contentContainerStyle}
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+          />
+          <TouchableOpacity
+            style={[localStyles.addPostButton, { backgroundColor: colors.primary }]}
+            onPress={navigateToAddPost}>
+            <Octicons name={'plus'} size={moderateScale(20)} color={colors.white} />
+          </TouchableOpacity>
+        </>
       )}
     </CSafeAreaView>
   );
@@ -413,15 +409,6 @@ const localStyles = StyleSheet.create({
     borderRadius: moderateScale(29),
     marginTop: moderateScale(16),
   },
-  AddPostIconStyle: {
-    height: moderateScale(16),
-    width: moderateScale(16),
-    borderRadius: moderateScale(20),
-    position: 'absolute',
-    bottom: 10,
-    right: 0,
-    ...styles.center,
-  },
   addPostContainer: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -451,5 +438,23 @@ const localStyles = StyleSheet.create({
     fontSize: moderateScale(12),
     fontWeight: 'bold',
     fontFamily: 'Arial',
+  },
+  addPostButton: {
+    position: 'absolute',
+    bottom: moderateScale(20),
+    right: moderateScale(20),
+    width: moderateScale(60),
+    height: moderateScale(60),
+    borderRadius: moderateScale(30),
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
 });

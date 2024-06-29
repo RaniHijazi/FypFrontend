@@ -1,25 +1,35 @@
-import {StyleSheet, TouchableOpacity, View} from 'react-native';
-import React from 'react';
-import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import Octicons from 'react-native-vector-icons/Octicons';
+import { StyleSheet, View, Keyboard } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
 // Custom imports
-import {TabNav} from '../NavigationKeys';
-import {TabRoute} from '../NavigationRoute';
-import {moderateScale} from '../../common/constants';
-import {styles} from '../../themes';
-import {useSelector} from 'react-redux';
-import {HomeIcon, Notification, ProfilePhoto, Search, OfficeIcon, CommunityIcon} from '../../assets/svgs';
+import { TabNav } from '../NavigationKeys';
+import { TabRoute } from '../NavigationRoute';
+import { moderateScale } from '../../common/constants';
+import { styles } from '../../themes';
+import { useSelector } from 'react-redux';
+import { HomeIcon, Notification, Search, OfficeIcon, CommunityIcon, FrankIcon } from '../../assets/svgs';
 
-export default function TabNavigation({navigation}) {
+export default function TabNavigation({ navigation }) {
   const colors = useSelector(state => state.theme.theme);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
   const Tab = createBottomTabNavigator();
 
-  const onPressAddPost = () => {
-    navigation.navigate(TabNav.AddPostTab);
-  };
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', () => {
+      setKeyboardVisible(true);
+    });
+    const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardVisible(false);
+    });
 
-  const TabDot = ({focused, icon, messageDot, isCommunity}) => (
+    return () => {
+      keyboardDidHideListener.remove();
+      keyboardDidShowListener.remove();
+    };
+  }, []);
+
+  const TabDot = ({ focused, icon, messageDot, isCommunity }) => (
     <View style={localStyles.tabViewContainer}>
       <View style={focused ? styles.mt30 : messageDot ? styles.mt15 : null}>
         {isCommunity ? (
@@ -34,34 +44,17 @@ export default function TabNavigation({navigation}) {
         <View
           style={[
             localStyles.notificationDot,
-            {backgroundColor: colors.redColor},
+            { backgroundColor: colors.redColor },
           ]}
         />
       ) : null}
       {focused ? (
         <View
-          style={[localStyles.bottomDotStyle, {backgroundColor: colors.black}]}
+          style={[localStyles.bottomDotStyle, { backgroundColor: colors.black }]}
         />
       ) : null}
     </View>
   );
-
-  const AddPostIcon = () => {
-    return (
-      <TouchableOpacity
-        onPress={onPressAddPost}
-        style={[
-          localStyles.AddPostIconStyle,
-          {backgroundColor: colors.addPostBtn},
-        ]}>
-        <Octicons
-          name={'plus'}
-          size={moderateScale(20)}
-          color={colors.primary}
-        />
-      </TouchableOpacity>
-    );
-  };
 
   return (
     <Tab.Navigator
@@ -69,7 +62,7 @@ export default function TabNavigation({navigation}) {
         headerShown: false,
         tabBarStyle: [
           localStyles.tabBarStyle,
-          {backgroundColor: colors.tabBarColor},
+          { backgroundColor: colors.tabBarColor, display: keyboardVisible ? 'none' : 'flex' },
         ],
         tabBarShowLabel: false,
       }}>
@@ -77,7 +70,7 @@ export default function TabNavigation({navigation}) {
         name={TabNav.HomeTab}
         component={TabRoute.HomeTab}
         options={{
-          tabBarIcon: ({focused}) => (
+          tabBarIcon: ({ focused }) => (
             <TabDot focused={focused} icon={<HomeIcon />} />
           ),
         }}
@@ -86,23 +79,34 @@ export default function TabNavigation({navigation}) {
         name={TabNav.SearchTab}
         component={TabRoute.SearchTab}
         options={{
-          tabBarIcon: ({focused}) => (
+          tabBarIcon: ({ focused }) => (
             <TabDot focused={focused} icon={<Search />} />
           ),
         }}
       />
       <Tab.Screen
-        name={TabNav.AddPostTab}
-        component={TabRoute.AddPostTab}
+        name={TabNav.FrankTab}
+        component={TabRoute.FrankTab}
         options={{
-          tabBarIcon: ({focused}) => <AddPostIcon />,
+          tabBarIcon: ({ focused }) => (
+            <TabDot focused={focused} icon={<FrankIcon />} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name={TabNav.CommunitiesTab}
+        component={TabRoute.CommunitiesTab}
+        options={{
+          tabBarIcon: ({ focused }) => (
+            <TabDot focused={focused} icon={<CommunityIcon />} isCommunity={true} />
+          ),
         }}
       />
       <Tab.Screen
         name={TabNav.NotificationTab}
         component={TabRoute.NotificationTab}
         options={{
-          tabBarIcon: ({focused}) => (
+          tabBarIcon: ({ focused }) => (
             <TabDot
               focused={focused}
               icon={<Notification />}
@@ -115,21 +119,12 @@ export default function TabNavigation({navigation}) {
         name={TabNav.FacultiesTab}
         component={TabRoute.FacultiesTab}
         options={{
-          tabBarIcon: ({focused}) => (
+          tabBarIcon: ({ focused }) => (
             <TabDot
               focused={focused}
               icon={<OfficeIcon />}
               messageDot={false}
             />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name={TabNav.CommunitiesTab}
-        component={TabRoute.CommunitiesTab}
-        options={{
-          tabBarIcon: ({focused}) => (
-            <TabDot focused={focused} icon={<CommunityIcon />} isCommunity={true} />
           ),
         }}
       />
@@ -139,12 +134,8 @@ export default function TabNavigation({navigation}) {
 
 const localStyles = StyleSheet.create({
   tabBarStyle: {
-    position: 'absolute',
-    borderRadius: moderateScale(5),
-    ...styles.mb20,
-    ...styles.ph20,
+    borderTopWidth: 0,
     height: moderateScale(63),
-    ...styles.mh15,
   },
   bottomDotStyle: {
     height: moderateScale(10),
@@ -156,12 +147,6 @@ const localStyles = StyleSheet.create({
   tabViewContainer: {
     ...styles.center,
   },
-  AddPostIconStyle: {
-    height: moderateScale(40),
-    width: moderateScale(40),
-    borderRadius: moderateScale(20),
-    ...styles.center,
-  },
   notificationDot: {
     height: moderateScale(6),
     width: moderateScale(6),
@@ -169,6 +154,6 @@ const localStyles = StyleSheet.create({
     ...styles.mt10,
   },
   communityIconWrapper: {
-    transform: [{ scale: 0.155 }], // Adjust the scale value as needed
+    transform: [{ scale: 1 }], // Adjust the scale value as needed
   },
 });

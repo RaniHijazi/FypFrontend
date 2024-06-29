@@ -20,6 +20,7 @@ export const StackNav = {
    Documents:'Documents',
    CreateChat:'CreateChat',
    CreateGroupScreen:'CreateGroupScreen',
+   AddPostTab:'AddPostTab',
 
 
 };
@@ -43,10 +44,10 @@ export const AuthNav = {
 export const TabNav = {
   HomeTab: 'HomeTab',
   SearchTab: 'SearchTab',
-  AddPostTab: 'AddPostTab',
   NotificationTab: 'NotificationTab',
   ProfileTab: 'ProfileTab',
   MajorsTab:'MajorsTab',
   FacultiesTab:'FacultiesTab',
   CommunitiesTab:'CommunitiesTab',
+  FrankTab: 'FrankTab',
 };

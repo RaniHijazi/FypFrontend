@@ -24,6 +24,8 @@ import GalleryDark from './galleryDark.svg';
 import GifDark from './gifDark.svg';
 import OfficeIcon from './Office.svg';
 import CommunityIcon from './CommunityIcon.svg';
+import FrankIcon from './FrankIcon.svg';
+import FrankIconWhite from './FrankIconWhite.svg';
 
 export {
   HomeIcon,
@@ -52,4 +54,6 @@ export {
   GifDark,
   OfficeIcon,
   CommunityIcon,
+  FrankIcon,
+  FrankIconWhite,
 };
