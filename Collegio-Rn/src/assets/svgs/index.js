@@ -27,6 +27,11 @@ import CommunityIcon from './CommunityIcon.svg';
 import FrankIcon from './FrankIcon.svg';
 import FrankIconWhite from './FrankIconWhite.svg';
 import SendIconWhite from './SendIconWhite.svg';
+import HomeWhite from './homeWhite.svg';
+import NotificationWhite from './notificationWhite.svg';
+import OfficeWhite from './OfficeWhite.svg';
+import SearchWhite from './searchWhite.svg';
+import CommunityIconWhite from './CommunityIconWhite.svg';
 
 
 export {
@@ -59,4 +64,9 @@ export {
   FrankIcon,
   FrankIconWhite,
   SendIconWhite,
+  HomeWhite,
+  NotificationWhite,
+  OfficeWhite,
+  SearchWhite,
+  CommunityIconWhite,
 };

@@ -8,7 +8,7 @@ import { TabRoute } from '../NavigationRoute';
 import { moderateScale } from '../../common/constants';
 import { styles } from '../../themes';
 import { useSelector } from 'react-redux';
-import { HomeIcon, Notification, Search, OfficeIcon, CommunityIcon, FrankIcon } from '../../assets/svgs';
+import { HomeIcon, Notification, Search, OfficeIcon, CommunityIcon, FrankIcon, HomeWhite, NotificationWhite, OfficeWhite, SearchWhite, CommunityIconWhite, FrankIconWhite } from '../../assets/svgs';
 
 export default function TabNavigation({ navigation }) {
   const colors = useSelector(state => state.theme.theme);
@@ -50,7 +50,10 @@ export default function TabNavigation({ navigation }) {
       ) : null}
       {focused ? (
         <View
-          style={[localStyles.bottomDotStyle, { backgroundColor: colors.black }]}
+          style={[
+            localStyles.bottomDotStyle,
+            { backgroundColor: colors.dark ? colors.white : colors.black },
+          ]}
         />
       ) : null}
     </View>
@@ -62,7 +65,7 @@ export default function TabNavigation({ navigation }) {
         headerShown: false,
         tabBarStyle: [
           localStyles.tabBarStyle,
-          { backgroundColor: colors.tabBarColor, display: keyboardVisible ? 'none' : 'flex' },
+          { backgroundColor: colors.dark ? colors.black : colors.tabBarColor, display: keyboardVisible ? 'none' : 'flex' },
         ],
         tabBarShowLabel: false,
       }}>
@@ -71,7 +74,10 @@ export default function TabNavigation({ navigation }) {
         component={TabRoute.HomeTab}
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabDot focused={focused} icon={<HomeIcon />} />
+            <TabDot
+              focused={focused}
+              icon={colors.dark ? <HomeWhite /> : <HomeIcon />}
+            />
           ),
         }}
       />
@@ -80,7 +86,7 @@ export default function TabNavigation({ navigation }) {
         component={TabRoute.SearchTab}
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabDot focused={focused} icon={<Search />} />
+            <TabDot focused={focused} icon={colors.dark ? <SearchWhite /> : <Search />} />
           ),
         }}
       />
@@ -89,7 +95,7 @@ export default function TabNavigation({ navigation }) {
         component={TabRoute.FrankTab}
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabDot focused={focused} icon={<FrankIcon />} />
+            <TabDot focused={focused} icon={colors.dark ? <FrankIconWhite /> : <FrankIcon />} />
           ),
         }}
       />
@@ -98,7 +104,7 @@ export default function TabNavigation({ navigation }) {
         component={TabRoute.CommunitiesTab}
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabDot focused={focused} icon={<CommunityIcon />} isCommunity={true} />
+            <TabDot focused={focused} icon={colors.dark ? <CommunityIconWhite /> : <CommunityIcon />} isCommunity={true} />
           ),
         }}
       />
@@ -109,7 +115,7 @@ export default function TabNavigation({ navigation }) {
           tabBarIcon: ({ focused }) => (
             <TabDot
               focused={focused}
-              icon={<Notification />}
+              icon={colors.dark ? <NotificationWhite /> : <Notification />}
               messageDot={true}
             />
           ),
@@ -122,8 +128,7 @@ export default function TabNavigation({ navigation }) {
           tabBarIcon: ({ focused }) => (
             <TabDot
               focused={focused}
-              icon={<OfficeIcon />}
-              messageDot={false}
+              icon={colors.dark ? <OfficeWhite /> : <OfficeIcon />}
             />
           ),
         }}
