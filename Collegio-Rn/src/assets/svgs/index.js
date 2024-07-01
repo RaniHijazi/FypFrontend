@@ -26,6 +26,8 @@ import OfficeIcon from './Office.svg';
 import CommunityIcon from './CommunityIcon.svg';
 import FrankIcon from './FrankIcon.svg';
 import FrankIconWhite from './FrankIconWhite.svg';
+import SendIconWhite from './SendIconWhite.svg';
+
 
 export {
   HomeIcon,
@@ -56,4 +58,5 @@ export {
   CommunityIcon,
   FrankIcon,
   FrankIconWhite,
+  SendIconWhite,
 };
