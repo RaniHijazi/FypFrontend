@@ -44,7 +44,7 @@ export function getHeight(value) {
   return (value / sampleHeight) * deviceHeight;
 }
 
-//Responsive size function
+
 export function moderateScale(size) {
   const newSize = size * scale;
   return Math.round(newSize);
@@ -54,4 +54,4 @@ export function moderateScale(size) {
 export const THEME = 'THEME';
 export const ON_BOARDING = 'ON_BOARDING';
 export const ACCESS_TOKEN = 'ACCESS_TOKEN';
-export const API_BASE_URL = 'http://192.168.0.101:7210';
+export const API_BASE_URL = 'http://192.168.224.1:7210';

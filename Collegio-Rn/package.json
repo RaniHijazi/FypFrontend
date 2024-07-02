@@ -13,6 +13,7 @@
     "androidBuild": "npx react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle && cd android && ./gradlew clean && ./gradlew assembleRelease --warning-mode all"
   },
   "dependencies": {
+    "@microsoft/signalr": "^8.0.0",
     "@react-native-async-storage/async-storage": "^1.21.0",
     "@react-native-picker/picker": "^2.7.5",
     "@react-navigation/bottom-tabs": "^6.5.11",
@@ -29,6 +30,7 @@
     "react-native-splash-screen": "^3.3.0",
     "react-native-svg": "^14.1.0",
     "react-native-svg-transformer": "^1.3.0",
+    "react-native-url-polyfill": "^2.0.0",
     "react-native-vector-icons": "^10.1.0",
     "react-native-video": "^5.2.1",
     "react-redux": "^9.0.4",

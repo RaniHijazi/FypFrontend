@@ -5,21 +5,22 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useState, useEffect} from 'react';
-import {useSelector} from 'react-redux';
+import React, { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 // Custom imports
-import {moderateScale} from '../../common/constants';
+import { moderateScale } from '../../common/constants';
 import CSafeAreaView from '../common/CSafeAreaView';
 import CHeader from '../common/CHeader';
 import strings from '../../i18n/strings';
-import {styles} from '../../themes';
+import { styles } from '../../themes';
 import CKeyBoardAvoidWrapper from '../common/CKeyBoardAvoidWrapper';
 import CText from '../common/CText';
 import CInput from '../common/CInput';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function CreateGroupScreen({navigation}) {
+export default function CreateGroupScreen({ navigation }) {
   const colors = useSelector(state => state.theme.theme);
   const [search, setSearch] = useState('');
   const [users, setUsers] = useState([]);
@@ -33,7 +34,7 @@ export default function CreateGroupScreen({navigation}) {
   const fetchUsers = async () => {
     try {
       console.log('Fetching users...');
-      const response = await fetch('http://172.20.10.3:7210/api/User/all');
+      const response = await fetch('http://192.168.224.1:7210/api/User/all');
       if (!response.ok) {
         throw new Error('Failed to fetch users');
       }
@@ -57,19 +58,52 @@ export default function CreateGroupScreen({navigation}) {
     }
   };
 
-  const createGroup = () => {
-    // Implement your group creation logic here
-    console.log('Creating group with users:', selectedUsers, 'Group name:', groupName);
-  };
+  const createGroup = async () => {
+      const creatorUserId = await AsyncStorage.getItem('userId');
+      if (!creatorUserId) {
+        console.error('No creator user ID found in AsyncStorage');
+        return;
+      }
 
-  const renderItem = ({item}) => {
+      const formData = new FormData();
+      formData.append('ChatRoomName', groupName);
+      formData.append('CreatorUserId', parseInt(creatorUserId, 10));
+      selectedUsers.forEach(user => {
+        formData.append('UserIds', user.id);
+      });
+      formData.append('Image', null); // Assuming you're not uploading an image
+
+      try {
+        const response = await fetch('http://192.168.224.1:7210/api/ChatRoom/createandadd', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to create chat room');
+        }
+
+        const chatRoom = await response.json();
+        console.log('Chat room created:', chatRoom);
+
+        navigation.navigate('GroupChatScreen', { data: chatRoom, selectedUserIds: selectedUsers.map(user => user.id) });
+      } catch (error) {
+        console.error('Error creating chat room:', error.message);
+      }
+    };
+
+
+  const renderItem = ({ item }) => {
     const isSelected = selectedUsers.includes(item);
     return (
       <TouchableOpacity
         onPress={() => toggleUserSelection(item)}
         style={[
           localStyles.wrapContainer,
-          {backgroundColor: isSelected ? colors.primaryLight : colors.pinnedColor},
+          { backgroundColor: isSelected ? colors.primaryLight : colors.pinnedColor },
         ]}>
         <Image source={{ uri: item.profilePath }} style={localStyles.imageContainer} />
         <View style={localStyles.contentStyle}>
@@ -164,25 +198,25 @@ const localStyles = StyleSheet.create({
     ...styles.flexGrow1,
     ...styles.ph20,
   },
-
   createGroupContainer: {
     ...styles.flexRow,
     ...styles.justifyBetween,
     ...styles.alignCenter,
-
     paddingBottom: moderateScale(10),
   },
   groupNameInputContainer: {
     flex: 1,
     width: moderateScale(200), // Fixed height
-    height:moderateScale(45),
+    height: moderateScale(45),
   },
   createGroupButton: {
     backgroundColor: '#0F5CA8',
     paddingVertical: moderateScale(10),
     paddingHorizontal: moderateScale(15),
     borderRadius: moderateScale(15),
-    height:moderateScale(45),
-    margin:moderateScale(8),
+    height: moderateScale(45),
+    margin: moderateScale(8),
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

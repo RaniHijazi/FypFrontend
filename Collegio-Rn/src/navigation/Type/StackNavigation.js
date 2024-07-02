@@ -40,6 +40,11 @@ export default function StackNavigation() {
         name={StackNav.ChatScreen}
         component={StackRoute.ChatScreen}
       />
+      <Stack.Screen
+              name={StackNav.GroupChatScreen}
+              component={StackRoute.GroupChatScreen}
+            />
+
       <Stack.Screen name={StackNav.Setting} component={StackRoute.Setting} />
       <Stack.Screen name={StackNav.MajorsTab} component={StackRoute.MajorsTab} />
       <Stack.Screen name={StackNav.Documents} component={StackRoute.Documents} />

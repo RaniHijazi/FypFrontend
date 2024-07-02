@@ -11,8 +11,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import { useSelector } from 'react-redux';
 import Octicons from 'react-native-vector-icons/Octicons';
 import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
-import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SignalR from '@microsoft/signalr';
 
 // Custom imports
 import CSafeAreaView from '../../../components/common/CSafeAreaView';
@@ -23,17 +22,16 @@ import { checkPlatform, moderateScale } from '../../../common/constants';
 import strings from '../../../i18n/strings';
 import CInput from '../../../components/common/CInput';
 import { SendIcon } from '../../../assets/svgs';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-let signalRConnection = null;
-
-export default function ChatScreen({ route }) {
+export default function GroupChatScreen({ route }) {
   const data = route?.params?.data;
   const colors = useSelector(state => state.theme.theme);
   const [chat, setChat] = useState('');
   const [messages, setMessages] = useState([]);
   const [userId, setUserId] = useState(null);
   const [senderProfile, setSenderProfile] = useState(null);
-  const flatListRef = useRef(null);
+  const connectionRef = useRef(null);
 
   useEffect(() => {
     const retrieveUserId = async () => {
@@ -56,20 +54,20 @@ export default function ChatScreen({ route }) {
 
   useEffect(() => {
     if (userId !== null && senderProfile !== null) {
-      fetchAllMessages();
       startSignalRConnection();
+      fetchAllMessages();
     }
 
     return () => {
-      if (signalRConnection) {
-        signalRConnection.off('ReceiveMessage');
+      if (connectionRef.current) {
+        connectionRef.current.stop();
       }
     };
   }, [userId, senderProfile]);
 
-  const fetchMessages = async (senderId, receiverId) => {
+  const fetchMessages = async (roomId) => {
     try {
-      const response = await fetch(`http://192.168.224.1:7210/api/Message/sender/${senderId}?receiverId=${receiverId}`);
+      const response = await fetch(`http://192.168.224.1:7210/api/ChatRoom/${roomId}/messages`);
       if (!response.ok) {
         throw new Error('Failed to fetch messages');
       }
@@ -82,14 +80,8 @@ export default function ChatScreen({ route }) {
   };
 
   const fetchAllMessages = async () => {
-    const senderMessages = await fetchMessages(userId, data.id);
-    const receiverMessages = await fetchMessages(data.id, userId);
-
-    const combinedMessages = [...senderMessages, ...receiverMessages].sort(
-      (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
-    );
-    setMessages(combinedMessages);
-    flatListRef.current?.scrollToEnd({ animated: true });
+    const roomMessages = await fetchMessages(data.id);
+    setMessages(roomMessages);
   };
 
   const fetchUserProfile = async (userId) => {
@@ -103,77 +95,6 @@ export default function ChatScreen({ route }) {
     } catch (error) {
       console.error('Error fetching user profile:', error.message);
       return null;
-    }
-  };
-
-  const startSignalRConnection = async () => {
-    if (!signalRConnection) {
-      console.log('Initializing SignalR connection...');
-      signalRConnection = new HubConnectionBuilder()
-        .withUrl(`http://192.168.224.1:7210/chatHub?userId=${userId}`)
-        .configureLogging(LogLevel.Information)
-        .withAutomaticReconnect()
-        .build();
-
-      signalRConnection.on('ReceiveMessage', (messageContent, senderId, recipientId, timestamp) => {
-        const message = {
-          content: messageContent,
-          senderId: senderId,
-          recipientId: recipientId,
-          timestamp: new Date(timestamp)
-        };
-        console.log('Received message:', message);
-        setMessages((prevMessages) => {
-          const newMessages = [...prevMessages, message].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-          console.log('New Messages:', newMessages);
-          return newMessages;
-        });
-        flatListRef.current?.scrollToEnd({ animated: true });
-      });
-
-      try {
-        await signalRConnection.start();
-        console.log('SignalR Connected.');
-      } catch (error) {
-        console.error('Error establishing SignalR connection:', error);
-        setTimeout(startSignalRConnection, 5000); // Retry connection after 5 seconds
-      }
-
-      signalRConnection.onclose(async () => {
-        console.warn('SignalR connection closed. Reconnecting...');
-        await startSignalRConnection();
-      });
-
-      signalRConnection.onreconnecting((error) => {
-        console.warn('SignalR reconnecting...', error);
-      });
-
-      signalRConnection.onreconnected((connectionId) => {
-        console.log('SignalR reconnected with connectionId:', connectionId);
-      });
-
-      try {
-        const connectedUsers = await signalRConnection.invoke('GetConnectedUsers');
-        console.log('Connected users:', connectedUsers);
-      } catch (error) {
-        console.error('Error fetching connected users:', error);
-      }
-    } else {
-      signalRConnection.on('ReceiveMessage', (messageContent, senderId, recipientId, timestamp) => {
-        const message = {
-          content: messageContent,
-          senderId: senderId,
-          recipientId: recipientId,
-          timestamp: new Date(timestamp)
-        };
-        console.log('Received message:', message);
-        setMessages((prevMessages) => {
-          const newMessages = [...prevMessages, message].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-          console.log('New Messages:', newMessages);
-          return newMessages;
-        });
-        flatListRef.current?.scrollToEnd({ animated: true });
-      });
     }
   };
 
@@ -194,21 +115,14 @@ export default function ChatScreen({ route }) {
       timestamp: new Date().toISOString(),
     };
 
-    // Optimistically update the UI
-    setMessages((prevMessages) => [...prevMessages, newMessage]);
-    flatListRef.current?.scrollToEnd({ animated: true });
-
     try {
-      const url = `http://192.168.224.1:7210/api/Message/send?senderId=${userId}&recipientId=${data.id}&messageContent=${encodeURIComponent(chat)}`;
-      const response = await fetch(url, {
+      const response = await fetch(`http://192.168.224.1:7210/api/Message/sendToRoom?senderId=${userId}&roomId=${data.id}&messageContent=${encodeURIComponent(chat)}`, {
         method: 'POST',
       });
-
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to send message: ${errorText}`);
+        throw new Error('Failed to send message');
       }
-
+      setMessages(prevMessages => [...prevMessages, newMessage]);
       setChat('');
     } catch (error) {
       console.error('Error sending message:', error.message);
@@ -217,6 +131,25 @@ export default function ChatScreen({ route }) {
 
   const onChangeTextChat = text => {
     setChat(text);
+  };
+
+  const startSignalRConnection = async () => {
+    try {
+      const connection = new SignalR.HubConnectionBuilder()
+        .withUrl('http://192.168.224.1:7210/chatHub')
+        .withAutomaticReconnect()
+        .build();
+
+      connection.on('ReceiveRoomMessage', message => {
+        setMessages(prevMessages => [...prevMessages, message]);
+      });
+
+      await connection.start();
+      connectionRef.current = connection;
+      console.log('SignalR connection established');
+    } catch (error) {
+      console.error('Error establishing SignalR connection:', error);
+    }
   };
 
   const rightAccessory = () => {
@@ -286,10 +219,10 @@ export default function ChatScreen({ route }) {
         <View style={localStyles.contentStyle}>
           <Image source={{ uri: data.profilePath }} style={localStyles.profileImageStyle} />
           <CText color={colors.mainColor} type={'b14'} numberOfLines={1}>
-            {data.fullName}
+            {data.roomName}
           </CText>
           <CText color={colors.grayScale5} type={'r12'} numberOfLines={1}>
-            {`Joined on ${new Date(data.joinDate).toDateString()}`}
+            {`Created on ${new Date(data.dateOfCreate).toDateString()}`}
           </CText>
         </View>
       </View>
@@ -299,12 +232,12 @@ export default function ChatScreen({ route }) {
         behavior={checkPlatform() === 'ios' ? 'padding' : null}>
         <View style={styles.flex}>
           <FlatList
-            ref={flatListRef}
             data={messages}
             renderItem={renderItem}
             showsVerticalScrollIndicator={false}
+            pagingEnabled
             keyExtractor={(item, index) => index.toString()}
-            onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+            bounces={false}
           />
         </View>
         <CInput
