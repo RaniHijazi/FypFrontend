@@ -33,6 +33,7 @@ import OtherPersonProfile from '../containers/TabBar/Home/OtherPersonProfile';
 import ViewPost from '../components/HomeComponent/ViewPost';
 import Messages from '../components/HomeComponent/Messages';
 import ChatScreen from '../containers/TabBar/Home/ChatScreen';
+import GroupChatScreen from '../containers/TabBar/Home/GroupChatScreen';
 import Setting from '../containers/TabBar/Profile/Setting';
 import StoryView from '../containers/TabBar/Home/StoryView';
 import DeleteAccount from '../containers/TabBar/Profile/DeleteAccount';
@@ -54,6 +55,7 @@ export const StackRoute = {
   ViewPost,
   Messages,
   ChatScreen,
+  GroupChatScreen,
   Setting,
   StoryView,
   DeleteAccount,

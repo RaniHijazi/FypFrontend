@@ -44,7 +44,7 @@ export function getHeight(value) {
   return (value / sampleHeight) * deviceHeight;
 }
 
-//Responsive size function
+
 export function moderateScale(size) {
   const newSize = size * scale;
   return Math.round(newSize);

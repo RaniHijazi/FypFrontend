@@ -4,34 +4,125 @@ import {
   StyleSheet,
   TouchableOpacity,
   View,
+  KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, { useState, useEffect } from 'react';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {useSelector} from 'react-redux';
+import { useSelector } from 'react-redux';
 
 // Custom imports
-import {moderateScale} from '../../common/constants';
+import { moderateScale } from '../../common/constants';
 import CSafeAreaView from '../common/CSafeAreaView';
 import CHeader from '../common/CHeader';
 import strings from '../../i18n/strings';
-import {styles} from '../../themes';
-import CKeyBoardAvoidWrapper from '../common/CKeyBoardAvoidWrapper';
-import CInput from '../common/CInput';
-import {messageList, pinnedUserList} from '../../api/constant';
+import { styles } from '../../themes';
 import CText from '../common/CText';
-import {StackNav} from '../../navigation/NavigationKeys';
+import CInput from '../common/CInput';
+import { StackNav } from '../../navigation/NavigationKeys';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function Messages({navigation}) {
+export default function Messages({ navigation }) {
   const colors = useSelector(state => state.theme.theme);
-  const [search, setSearch] = useState();
+  const [search, setSearch] = useState('');
+  const [chats, setChats] = useState([]);
+  const [filteredChats, setFilteredChats] = useState([]);
 
-  const onChangeTextSearch = item => {
-    setSearch(item);
+  useEffect(() => {
+    fetchChatsWithMessages();
+  }, []);
+
+  const fetchChatsWithMessages = async () => {
+    try {
+      const storedUserId = await AsyncStorage.getItem('userId');
+      if (storedUserId !== null) {
+        const userIdInt = parseInt(storedUserId, 10);
+        const messagesData = await fetchUserMessages(userIdInt);
+        const userProfiles = await fetchUserProfiles(messagesData, userIdInt);
+        const chatsData = groupMessagesByChat(messagesData, userProfiles, userIdInt);
+        setChats(chatsData);
+        setFilteredChats(chatsData);
+      }
+    } catch (error) {
+      console.error('Error fetching chats with messages:', error);
+    }
   };
 
-  const onPressMessage = item => {
-    navigation.navigate(StackNav.ChatScreen, {data: item});
+  const fetchUserMessages = async (userId) => {
+    try {
+      const response = await fetch(`http://192.168.224.1:7210/api/Message/${userId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch messages');
+      }
+      const messagesData = await response.json();
+      return messagesData;
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      return [];
+    }
+  };
+
+  const fetchUserProfiles = async (messages, userId) => {
+    const userIds = new Set();
+    messages.forEach(message => {
+      if (message.senderId !== userId && message.senderId !== null) {
+        userIds.add(message.senderId);
+      }
+      if (message.recipientId !== userId && message.recipientId !== null) {
+        userIds.add(message.recipientId);
+      }
+    });
+
+    const profiles = {};
+    for (const id of userIds) {
+      try {
+        const response = await fetch(`http://192.168.224.1:7210/api/User/${id}/profile`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch user profile');
+        }
+        const profile = await response.json();
+        profiles[id] = profile;
+      } catch (error) {
+        console.error(`Error fetching user profile for ID ${id}:`, error);
+      }
+    }
+    return profiles;
+  };
+
+  const groupMessagesByChat = (messages, profiles, userId) => {
+    const chats = {};
+    messages.forEach(message => {
+      const chatId = message.senderId === userId ? message.recipientId : message.senderId;
+      if (!chats[chatId]) {
+        chats[chatId] = {
+          id: chatId,
+          messages: [],
+          profile: profiles[chatId],
+        };
+      }
+      chats[chatId].messages.push(message);
+    });
+    return Object.values(chats);
+  };
+
+  const onChangeTextSearch = (item) => {
+    setSearch(item);
+    const filtered = chats.filter(chat =>
+      chat.profile.fullName.toLowerCase().includes(item.toLowerCase())
+    );
+    setFilteredChats(filtered);
+  };
+
+  const onPressMessage = (item) => {
+    const userProfile = item.profile;
+    navigation.navigate(StackNav.ChatScreen, {
+      data: {
+        id: userProfile.id,
+        fullName: userProfile.fullName,
+        profilePath: userProfile.profilePath,
+        joinDate: userProfile.joinDate,
+      },
+    });
   };
 
   const onPressAddButton = () => {
@@ -42,11 +133,11 @@ export default function Messages({navigation}) {
     return (
       <TouchableOpacity
         onPress={onPressAddButton}
-        style={[localStyles.containerStyle, {backgroundColor: colors.primary}]}>
+        style={[localStyles.iconButton]}>
         <Ionicons
           name={'add'}
           size={moderateScale(24)}
-          color={colors.white}
+          color={'#007BFF'} // Use a blue color directly for the icon
         />
       </TouchableOpacity>
     );
@@ -64,134 +155,85 @@ export default function Messages({navigation}) {
     );
   };
 
-  const renderItem = ({item}) => {
-    return (
-      <TouchableOpacity
-        onPress={() => onPressMessage(item)}
-        style={[
-          localStyles.wrapContainer,
-          {backgroundColor: colors.pinnedColor},
-        ]}>
-        <Image source={item.image} style={localStyles.imageContainer} />
-        <View style={localStyles.contentStyle}>
-          <CText
-            type={'m12'}
-            numberOfLines={1}
-            color={colors.grayScale5}
-            align={'center'}>
-            {item.name}
-          </CText>
-          {item.selected ? (
-            <View
-              style={[localStyles.dotStyle, {backgroundColor: colors.dotColor}]}
-            />
-          ) : null}
-        </View>
-      </TouchableOpacity>
-    );
-  };
-
-  const renderItemMessage = ({item}) => {
+  const renderItemMessage = ({ item }) => {
+    const latestMessage = item.messages[item.messages.length - 1];
     return (
       <TouchableOpacity
         onPress={() => onPressMessage(item)}
         style={[
           localStyles.topContainerStyle,
           localStyles.containerTopStyle,
-          {backgroundColor: colors.placeholderColor},
+          { backgroundColor: colors.placeholderColor },
         ]}>
         <View style={localStyles.messageContent}>
-          <Image source={item.image} style={localStyles.messageContainer} />
-          <View style={{gap: moderateScale(5)}}>
+          <Image source={{ uri: item.profile?.profilePath || 'default_profile_path' }} style={localStyles.messageContainer} />
+          <View style={{ gap: moderateScale(5) }}>
             <View style={styles.flexRow}>
               <CText color={colors.mainColor} type={'b14'} numberOfLines={1}>
-                {item.name}
+                {item.profile?.fullName || 'Unknown'}
               </CText>
               {item.selected ? (
                 <View
                   style={[
                     localStyles.dotStyle,
-                    {backgroundColor: colors.dotColor},
+                    { backgroundColor: colors.dotColor },
                   ]}
                 />
               ) : null}
             </View>
             <CText type={'r14'} numberOfLines={1}>
-              {item.message}
+              {latestMessage.content}
             </CText>
           </View>
         </View>
         <CText type={'r14'} numberOfLines={1} color={colors.grayScale5}>
-          {item.time}
+          {new Date(latestMessage.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </CText>
       </TouchableOpacity>
     );
   };
 
-  const ListHeaderComponent = () => {
-    return (
-      <View
-        style={[
-          localStyles.topContainerStyle,
-          {backgroundColor: colors.placeholderColor},
-        ]}>
-        <CText
-          type={'m12'}
-          numberOfLines={1}
-          color={colors.grayScale5}
-          style={styles.mb10}>
-          {strings.pinned}
-        </CText>
-        <FlatList
-          data={pinnedUserList}
-          renderItem={renderItem}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          bounces={false}
-          pagingEnabled
-          keyExtractor={(item, index) => index.toString()}
-        />
-      </View>
-    );
-  };
-
   return (
     <CSafeAreaView>
-      <CKeyBoardAvoidWrapper
-        contentContainerStyle={localStyles.contentContainerStyle}>
-        <CHeader title={strings.messages} rightIcon={<RightIcon />} />
-        <CInput
-          inputContainerStyle={[
-            localStyles.inputContainerStyle,
-            {shadowColor: colors.dark ? colors.black : colors.white},
-          ]}
-          placeHolder={strings.messagesPlaceHolder}
-          placeholderTextColor={colors.grayScale4}
-          rightAccessory={rightAccessory}
-          value={search}
-          onChangeText={onChangeTextSearch}
-        />
-        <FlatList
-          data={messageList}
-          renderItem={renderItemMessage}
-          ListHeaderComponent={<ListHeaderComponent />}
-          showsVerticalScrollIndicator={false}
-          bounces={false}
-          pagingEnabled
-          keyExtractor={(item, index) => index.toString()}
-          contentContainerStyle={styles.mb20}
-        />
-      </CKeyBoardAvoidWrapper>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : null}
+        style={localStyles.container}
+      >
+        <View style={localStyles.innerContainer}>
+          <CHeader title={strings.messages} rightIcon={<RightIcon />} />
+          <CInput
+            inputContainerStyle={[
+              localStyles.inputContainerStyle,
+              { shadowColor: colors.dark ? colors.black : colors.white },
+            ]}
+            placeHolder={strings.messagesPlaceHolder}
+            placeholderTextColor={colors.grayScale4}
+            rightAccessory={rightAccessory}
+            value={search}
+            onChangeText={onChangeTextSearch}
+          />
+          <FlatList
+            data={filteredChats}
+            renderItem={renderItemMessage}
+            showsVerticalScrollIndicator={false}
+            bounces={false}
+            pagingEnabled
+            keyExtractor={(item, index) => index.toString()}
+            contentContainerStyle={styles.mb20}
+          />
+        </View>
+      </KeyboardAvoidingView>
     </CSafeAreaView>
   );
 }
 
 const localStyles = StyleSheet.create({
-  containerStyle: {
+  iconButton: {
     width: moderateScale(32),
     height: moderateScale(32),
     borderRadius: moderateScale(16),
-    ...styles.center,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   contentContainerStyle: {
     ...styles.flexGrow1,
@@ -207,7 +249,7 @@ const localStyles = StyleSheet.create({
     ...Platform.select({
       ios: {
         shadowColor: '#1E9BD4',
-        shadowOffset: {width: 0, height: 4},
+        shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 4,
       },
@@ -252,5 +294,12 @@ const localStyles = StyleSheet.create({
     ...styles.flexRow,
     ...styles.flex,
     gap: moderateScale(10),
+  },
+  container: {
+    flex: 1,
+  },
+  innerContainer: {
+    flex: 1,
+    paddingHorizontal: moderateScale(20), // Add padding to the sides
   },
 });

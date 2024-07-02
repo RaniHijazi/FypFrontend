@@ -94,25 +94,26 @@ export default function HomeTab({ navigation, route }) {
     }
   };
 
-  const fetchUserStories = async (userId) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/User/${userId}/stories`);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch user stories: ${response.statusText}`);
-      }
-      const data = await response.json();
-      // Add userId and userProfileImageUrl to each story
-      const userStoriesWithUserId = data.map(story => ({
-        ...story,
-        userId: userId,
-        userProfileImageUrl: profilePath, // Assuming profilePath is the user's profile image URL
-      }));
+   const fetchUserStories = async (userId) => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/User/${userId}/stories`);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch user stories: ${response.statusText}`);
+        }
+        const data = await response.json();
 
-      setUserStories(userStoriesWithUserId);
-    } catch (error) {
-      console.error('Error fetching user stories:', error.message);
-    }
-  };
+        const userStoriesWithUserId = data.map(story => ({
+          ...story,
+          userId: userId,
+          userProfileImageUrl: profilePath, // Assuming profilePath is the user's profile image URL
+        }));
+
+        setUserStories(userStoriesWithUserId);
+      } catch (error) {
+
+        setUserStories([]); // Set user stories to an empty array if there's an error
+      }
+    };
 
 
 

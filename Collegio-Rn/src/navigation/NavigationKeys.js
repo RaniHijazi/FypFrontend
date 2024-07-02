@@ -8,6 +8,7 @@ export const StackNav = {
   ViewPost: 'ViewPost',
   Messages: 'Messages',
   ChatScreen: 'ChatScreen',
+  GroupChatScreen:'GroupChatScreen',
   Setting: 'Setting',
   StoryView: 'StoryView',
   DeleteAccount: 'DeleteAccount',
