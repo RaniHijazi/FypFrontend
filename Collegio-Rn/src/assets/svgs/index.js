@@ -24,6 +24,15 @@ import GalleryDark from './galleryDark.svg';
 import GifDark from './gifDark.svg';
 import OfficeIcon from './Office.svg';
 import CommunityIcon from './CommunityIcon.svg';
+import FrankIcon from './FrankIcon.svg';
+import FrankIconWhite from './FrankIconWhite.svg';
+import SendIconWhite from './SendIconWhite.svg';
+import HomeWhite from './homeWhite.svg';
+import NotificationWhite from './notificationWhite.svg';
+import OfficeWhite from './OfficeWhite.svg';
+import SearchWhite from './searchWhite.svg';
+import CommunityIconWhite from './CommunityIconWhite.svg';
+
 
 export {
   HomeIcon,
@@ -52,4 +61,12 @@ export {
   GifDark,
   OfficeIcon,
   CommunityIcon,
+  FrankIcon,
+  FrankIconWhite,
+  SendIconWhite,
+  HomeWhite,
+  NotificationWhite,
+  OfficeWhite,
+  SearchWhite,
+  CommunityIconWhite,
 };

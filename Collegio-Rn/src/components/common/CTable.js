@@ -1,9 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, FlatList } from 'react-native';
+import React, {useState, useEffect} from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  FlatList,
+} from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import typography from '../../themes/typography';
 
-const CTable = ({ data, navigation }) => {
+const CTable = ({data, navigation}) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -16,22 +23,26 @@ const CTable = ({ data, navigation }) => {
       </View>
       <FlatList
         data={data}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => <CoursesTable major={item} navigation={navigation} />}
+        keyExtractor={item => item.id.toString()}
+        renderItem={({item}) => (
+          <CoursesTable major={item} navigation={navigation} />
+        )}
         contentContainerStyle={styles.listContainer}
       />
     </View>
   );
 };
 
-const CoursesTable = ({ major, navigation }) => {
+const CoursesTable = ({major, navigation}) => {
   const [expandedRow, setExpandedRow] = useState(null);
   const [courses, setCourses] = useState([]);
 
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const response = await fetch(`http://192.168.224.1:7210///api/University/majors/${major.id}/courses`);
+        const response = await fetch(
+          `http://192.168.224.1:7210///api/University/majors/${major.id}/courses`,
+        );
         const data = await response.json();
         setCourses(data);
       } catch (error) {
@@ -42,7 +53,7 @@ const CoursesTable = ({ major, navigation }) => {
     fetchCourses();
   }, [major.id]);
 
-  const toggleRowExpansion = (index) => {
+  const toggleRowExpansion = index => {
     setExpandedRow(expandedRow === index ? null : index);
   };
 
@@ -50,10 +61,9 @@ const CoursesTable = ({ major, navigation }) => {
     <View style={styles.container}>
       <TouchableOpacity
         style={[styles.row, expandedRow === 0 && styles.expandedRow]}
-        onPress={() => toggleRowExpansion(0)}
-      >
+        onPress={() => toggleRowExpansion(0)}>
         <View style={styles.imageColumn}>
-          <Image source={{ uri: major.imgUrl }} style={styles.rowImage} />
+          <Image source={{uri: major.imgUrl}} style={styles.rowImage} />
         </View>
         <View style={styles.textColumn}>
           <Text style={styles.rowText}>{major.name}</Text>
@@ -61,8 +71,14 @@ const CoursesTable = ({ major, navigation }) => {
         <View style={styles.rowItem}>
           <Text style={styles.rowText}>{major.department}</Text>
         </View>
-        <View style={{ marginLeft: 5 }}>
-          <Ionicons name={expandedRow === 0 ? 'chevron-up-outline' : 'chevron-down-outline'} size={20} color="#000" />
+        <View style={{marginLeft: 5}}>
+          <Ionicons
+            name={
+              expandedRow === 0 ? 'chevron-up-outline' : 'chevron-down-outline'
+            }
+            size={20}
+            color="#000"
+          />
         </View>
       </TouchableOpacity>
       {expandedRow === 0 && (
@@ -74,7 +90,9 @@ const CoursesTable = ({ major, navigation }) => {
             {courses.map((course, courseIndex) => (
               <View key={courseIndex} style={styles.courseItem}>
                 <Text style={styles.courseName}>{course.name}</Text>
-                <Text style={styles.courseCredits}>{course.credits} credits</Text>
+                <Text style={styles.courseCredits}>
+                  {course.credits} credits
+                </Text>
               </View>
             ))}
           </View>
