@@ -50,7 +50,7 @@ export default function Messages({ navigation }) {
 
   const fetchUserMessages = async (userId) => {
     try {
-      const response = await fetch(`http://192.168.224.1:7210/api/Message/${userId}`);
+      const response = await fetch(`http://192.168.1.6:7210/api/Message/${userId}`);
       if (!response.ok) {
         throw new Error('Failed to fetch messages');
       }
@@ -76,7 +76,7 @@ export default function Messages({ navigation }) {
     const profiles = {};
     for (const id of userIds) {
       try {
-        const response = await fetch(`http://192.168.224.1:7210/api/User/${id}/profile`);
+        const response = await fetch(`http://192.168.1.6:7210/api/User/${id}/profile`);
         if (!response.ok) {
           throw new Error('Failed to fetch user profile');
         }

@@ -67,7 +67,7 @@ export default function GroupChatScreen({ route }) {
 
   const fetchMessages = async (roomId) => {
     try {
-      const response = await fetch(`http://192.168.224.1:7210/api/ChatRoom/${roomId}/messages`);
+      const response = await fetch(`http://192.168.1.6:7210/api/ChatRoom/${roomId}/messages`);
       if (!response.ok) {
         throw new Error('Failed to fetch messages');
       }
@@ -86,7 +86,7 @@ export default function GroupChatScreen({ route }) {
 
   const fetchUserProfile = async (userId) => {
     try {
-      const response = await fetch(`http://192.168.224.1:7210/api/User/${userId}/profile`);
+      const response = await fetch(`http://192.168.1.6:7210/api/User/${userId}/profile`);
       if (!response.ok) {
         throw new Error('Failed to fetch user profile');
       }
@@ -116,7 +116,7 @@ export default function GroupChatScreen({ route }) {
     };
 
     try {
-      const response = await fetch(`http://192.168.224.1:7210/api/Message/sendToRoom?senderId=${userId}&roomId=${data.id}&messageContent=${encodeURIComponent(chat)}`, {
+      const response = await fetch(`http://192.168.1.6:7210/api/Message/sendToRoom?senderId=${userId}&roomId=${data.id}&messageContent=${encodeURIComponent(chat)}`, {
         method: 'POST',
       });
       if (!response.ok) {
@@ -136,7 +136,7 @@ export default function GroupChatScreen({ route }) {
   const startSignalRConnection = async () => {
     try {
       const connection = new SignalR.HubConnectionBuilder()
-        .withUrl('http://192.168.224.1:7210/chatHub')
+        .withUrl('http://192.168.1.6:7210/chatHub')
         .withAutomaticReconnect()
         .build();
 

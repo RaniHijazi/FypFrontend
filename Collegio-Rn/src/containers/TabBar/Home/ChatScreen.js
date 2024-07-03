@@ -69,7 +69,7 @@ export default function ChatScreen({ route }) {
 
   const fetchMessages = async (senderId, receiverId) => {
     try {
-      const response = await fetch(`http://192.168.224.1:7210/api/Message/sender/${senderId}?receiverId=${receiverId}`);
+      const response = await fetch(`http://192.168.1.6:7210/api/Message/sender/${senderId}?receiverId=${receiverId}`);
       if (!response.ok) {
         throw new Error('Failed to fetch messages');
       }
@@ -94,7 +94,7 @@ export default function ChatScreen({ route }) {
 
   const fetchUserProfile = async (userId) => {
     try {
-      const response = await fetch(`http://192.168.224.1:7210/api/User/${userId}/profile`);
+      const response = await fetch(`http://192.168.1.6:7210/api/User/${userId}/profile`);
       if (!response.ok) {
         throw new Error('Failed to fetch user profile');
       }
@@ -110,7 +110,7 @@ export default function ChatScreen({ route }) {
     if (!signalRConnection) {
       console.log('Initializing SignalR connection...');
       signalRConnection = new HubConnectionBuilder()
-        .withUrl(`http://192.168.224.1:7210/chatHub?userId=${userId}`)
+        .withUrl(`http://192.168.1.6:7210/chatHub?userId=${userId}`)
         .configureLogging(LogLevel.Information)
         .withAutomaticReconnect()
         .build();
@@ -130,7 +130,7 @@ export default function ChatScreen({ route }) {
         });
         flatListRef.current?.scrollToEnd({ animated: true });
       });
-
+      console.log('Received message:', message);
       try {
         await signalRConnection.start();
         console.log('SignalR Connected.');
@@ -199,7 +199,7 @@ export default function ChatScreen({ route }) {
     flatListRef.current?.scrollToEnd({ animated: true });
 
     try {
-      const url = `http://192.168.224.1:7210/api/Message/send?senderId=${userId}&recipientId=${data.id}&messageContent=${encodeURIComponent(chat)}`;
+      const url = `http://192.168.1.6:7210/api/Message/send?senderId=${userId}&recipientId=${data.id}&messageContent=${encodeURIComponent(chat)}`;
       const response = await fetch(url, {
         method: 'POST',
       });
