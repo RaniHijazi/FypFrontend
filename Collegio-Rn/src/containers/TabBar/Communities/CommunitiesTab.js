@@ -1,44 +1,100 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, FlatList, Image, TouchableOpacity, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  StyleSheet,
+  FlatList,
+  Image,
+  TouchableOpacity,
+  Platform,
+  ActivityIndicator,
+} from 'react-native';
 import { useSelector } from 'react-redux';
 import CText from '../../../components/common/CText';
 import CustomHeader from '../../../components/common/CustomHeader';
 import CSafeAreaView from '../../../components/common/CSafeAreaView';
-import { moderateScale } from '../../../common/constants';
-
-const communities = [
-  {
-    id: '1',
-    name: 'Xbox Community',
-    members: '35.5K Members',
-    category: 'Gaming',
-    image: 'https://placekitten.com/200/200',
-  },
-  {
-    id: '2',
-    name: 'Graphic Design Community',
-    members: '3,748 Members',
-    category: 'Gaming',
-    image: 'https://placekitten.com/200/200',
-  },
-  {
-    id: '3',
-    name: 'Playstation Community',
-    members: '3,226 Members',
-    category: 'Fashion & Beauty',
-    image: 'https://placekitten.com/200/200',
-  },
-  // Add more sample data here
-];
-
-const exploreCommunities = [
-  // Add sample data for explore communities here
-];
+import { moderateScale, API_BASE_URL } from '../../../common/constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import PostComponent from '../../../components/HomeComponent/PostComponent';
 
 export default function CommunitiesTab({ navigation }) {
   const colors = useSelector(state => state.theme.theme) || {};
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState('Home');
+  const [communities, setCommunities] = useState([]);
+  const [exploreCommunities, setExploreCommunities] = useState([]);
+  const [posts, setPosts] = useState([]);
+  const [communityId, setCommunityId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState(null);
+
+  useEffect(() => {
+    const retrieveUserId = async () => {
+      try {
+        const storedUserId = await AsyncStorage.getItem('userId');
+        if (storedUserId !== null) {
+          const userIdInt = parseInt(storedUserId, 10);
+          setUserId(userIdInt);
+          fetchUserById(userIdInt);
+          console.log('Retrieved userId:', userIdInt);
+        }
+      } catch (error) {
+        console.error('Error retrieving userId from AsyncStorage:', error);
+      }
+    };
+
+    retrieveUserId();
+  }, []);
+
+  useEffect(() => {
+    if (communityId) {
+      fetchCommunities(communityId);
+      if (activeTab === 'Explore') {
+        fetchPrePosts(communityId);
+      }
+    }
+  }, [communityId, activeTab]);
+
+  const fetchUserById = async (id) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/User/${id}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch user data: ${response.statusText}`);
+      }
+
+      const userData = await response.json();
+      setCommunityId(userData.communityId);
+    } catch (error) {
+      console.error('Error fetching user data:', error.message);
+    }
+  };
+
+  const fetchCommunities = async (preCommunityId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/Community/subCommunities?preCommunityId=${preCommunityId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch communities');
+      }
+      const data = await response.json();
+      setCommunities(data);
+    } catch (error) {
+      console.error('Error fetching communities:', error);
+    }
+  };
+
+  const fetchPrePosts = async (communityId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/Post/subcommunity-posts?preCommunityId=${communityId}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch posts: ${response.statusText}`);
+      }
+      const data = await response.json();
+      setPosts(data.reverse()); // Reverse the posts array
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching posts:', error.message);
+      setLoading(false);
+    }
+  };
 
   const onChangeTextSearch = text => {
     setSearch(text);
@@ -60,19 +116,36 @@ export default function CommunitiesTab({ navigation }) {
           },
         ]}
       >
-        <Image source={{ uri: item.image }} style={localStyles.imageContainer} />
+        <Image source={{ uri: item.imageUrl }} style={localStyles.imageContainer} />
         <View style={localStyles.contentStyle}>
           <CText type="m16" numberOfLines={1} color={colors.dark ? colors.white : colors.text} align="left">
             {item.name}
           </CText>
           <CText type="r14" numberOfLines={1} color={colors.dark ? colors.white : colors.text} align="left">
-            {item.members}
+            {`${item.nbMembers} Members`}
           </CText>
           <CText type="r14" numberOfLines={1} color={colors.dark ? colors.white : colors.text} align="left">
-            {item.category}
+            {item.description}
           </CText>
         </View>
       </TouchableOpacity>
+    );
+  };
+
+  const renderPostComponent = ({ item, index }) => {
+    return (
+      <View style={[localStyles.postContainer, index === 0 && localStyles.firstPostContainer]}>
+        <PostComponent item={item} onPress={() => {}} userId={userId} updatePostLikes={(postId, newLikeCount) => {
+          setPosts(prevPosts =>
+            prevPosts.map(post => {
+              if (post.id === postId) {
+                return { ...post, likesCount: newLikeCount };
+              }
+              return post;
+            })
+          );
+        }} />
+      </View>
     );
   };
 
@@ -97,14 +170,30 @@ export default function CommunitiesTab({ navigation }) {
           <CText type="b16" color={activeTab === 'Explore' ? colors.primary : colors.text}>Explore</CText>
         </TouchableOpacity>
       </View>
-      <FlatList
-        data={filteredCommunities}
-        renderItem={renderItem}
-        keyExtractor={item => item.id}
-        showsVerticalScrollIndicator={false}
-        bounces={false}
-        contentContainerStyle={localStyles.flatListContentContainer}
-      />
+      {loading ? (
+        <ActivityIndicator size="large" color={colors.primary} />
+      ) : (
+        <FlatList
+          data={filteredCommunities}
+          renderItem={renderItem}
+          keyExtractor={item => item.id.toString()}
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+          contentContainerStyle={localStyles.flatListContentContainer}
+          ListFooterComponent={
+            activeTab === 'Explore' && posts.length > 0 ? (
+              <FlatList
+                data={posts}
+                renderItem={renderPostComponent}
+                keyExtractor={item => item.id.toString()}
+                showsVerticalScrollIndicator={false}
+                bounces={false}
+                contentContainerStyle={localStyles.postsContentContainerStyle}
+              />
+            ) : null
+          }
+        />
+      )}
     </CSafeAreaView>
   );
 }
@@ -141,7 +230,6 @@ const localStyles = StyleSheet.create({
       },
       android: {
         elevation: 3,
-
       },
     }),
   },
@@ -157,5 +245,16 @@ const localStyles = StyleSheet.create({
   },
   flatListContentContainer: {
     paddingBottom: moderateScale(20),
+  },
+  postsContentContainerStyle: {
+    paddingHorizontal: moderateScale(14), // Add padding to the sides
+    paddingBottom: moderateScale(20),
+  },
+  postContainer: {
+    marginHorizontal: moderateScale(14), // Add margin to the sides of each post
+    marginBottom: moderateScale(7), // Optional: Add margin between posts
+  },
+  firstPostContainer: {
+    marginTop: moderateScale(20), // Add margin to the top of the first post
   },
 });

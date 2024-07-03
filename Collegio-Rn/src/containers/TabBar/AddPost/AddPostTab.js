@@ -21,6 +21,7 @@ export default function AddPostTab({ navigation }) {
   const [selectPost, setSelectPost] = useState(true);
   const [image, setImage] = useState(null);
   const [userId, setUserId] = useState(null);
+  const [communityId, setCommunityId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [imagePreviewVisible, setImagePreviewVisible] = useState(false);
 
@@ -31,6 +32,7 @@ export default function AddPostTab({ navigation }) {
         if (storedUserId !== null) {
           const userIdInt = parseInt(storedUserId, 10);
           setUserId(userIdInt);
+          fetchUserById(userIdInt);
           console.log('Retrieved userId:', userIdInt);
         }
       } catch (error) {
@@ -40,6 +42,21 @@ export default function AddPostTab({ navigation }) {
 
     retrieveUserId();
   }, []);
+
+  const fetchUserById = async (id) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/User/${id}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch user data: ${response.statusText}`);
+      }
+
+      const userData = await response.json();
+      setCommunityId(userData.communityId);
+
+    } catch (error) {
+      console.error('Error fetching user data:', error.message);
+    }
+  };
 
   const onPressDiscard = () => {
     navigation.navigate(TabNav.HomeTab);
@@ -108,8 +125,8 @@ export default function AddPostTab({ navigation }) {
   };
 
   const onSubmitPost = async () => {
-    if (!userId) {
-      Alert.alert('Error', 'User ID not found');
+    if (!userId || !communityId) {
+      Alert.alert('Error', 'User ID or Community ID not found');
       return;
     }
 
@@ -123,7 +140,7 @@ export default function AddPostTab({ navigation }) {
         name: 'photo.jpg',
       });
     }
-    formData.append('CommunityId', 1); // Set CommunityId to 1
+    formData.append('CommunityId', communityId); // Use retrieved CommunityId
     formData.append('UserId', userId); // Use retrieved UserId
     formData.append('Description', post);
 

@@ -110,6 +110,7 @@ export default function GroupChatScreen({ route }) {
 
     const newMessage = {
       content: chat,
+      senderId: userId, // Ensure senderId is included in the new message
       senderName: senderProfile.fullName,
       senderProfilePath: senderProfile.profilePath,
       timestamp: new Date().toISOString(),
@@ -182,7 +183,7 @@ export default function GroupChatScreen({ route }) {
   };
 
   const renderItem = ({ item }) => {
-    const isSender = item.senderName === senderProfile.fullName;
+    const isSender = item.senderId === userId; // Compare senderId with userId
     return (
       <View>
         <View
