@@ -26,11 +26,22 @@ export default function Messages({ navigation }) {
   const colors = useSelector(state => state.theme.theme);
   const [search, setSearch] = useState('');
   const [chats, setChats] = useState([]);
-  const [filteredChats, setFilteredChats] = useState([]);
+  const [rooms, setRooms] = useState([]);
+  const [combinedData, setCombinedData] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
+  const [chatsFetched, setChatsFetched] = useState(false);
+  const [roomsFetched, setRoomsFetched] = useState(false);
 
   useEffect(() => {
     fetchChatsWithMessages();
+    fetchChatRooms();
   }, []);
+
+  useEffect(() => {
+    if (chatsFetched && roomsFetched) {
+      combineData(chats, rooms);
+    }
+  }, [chatsFetched, roomsFetched]);
 
   const fetchChatsWithMessages = async () => {
     try {
@@ -41,7 +52,7 @@ export default function Messages({ navigation }) {
         const userProfiles = await fetchUserProfiles(messagesData, userIdInt);
         const chatsData = groupMessagesByChat(messagesData, userProfiles, userIdInt);
         setChats(chatsData);
-        setFilteredChats(chatsData);
+        setChatsFetched(true);
       }
     } catch (error) {
       console.error('Error fetching chats with messages:', error);
@@ -50,7 +61,7 @@ export default function Messages({ navigation }) {
 
   const fetchUserMessages = async (userId) => {
     try {
-      const response = await fetch(`http://192.168.224.1:7210/api/Message/${userId}`);
+      const response = await fetch(`http://192.168.0.100:7210/api/Message/${userId}`);
       if (!response.ok) {
         throw new Error('Failed to fetch messages');
       }
@@ -76,7 +87,7 @@ export default function Messages({ navigation }) {
     const profiles = {};
     for (const id of userIds) {
       try {
-        const response = await fetch(`http://192.168.224.1:7210/api/User/${id}/profile`);
+        const response = await fetch(`http://192.168.0.100:7210/api/User/${id}/profile`);
         if (!response.ok) {
           throw new Error('Failed to fetch user profile');
         }
@@ -105,12 +116,41 @@ export default function Messages({ navigation }) {
     return Object.values(chats);
   };
 
+  const fetchChatRooms = async () => {
+    try {
+      const storedUserId = await AsyncStorage.getItem('userId');
+      if (storedUserId !== null) {
+        const userIdInt = parseInt(storedUserId, 10);
+        const response = await fetch(`http://192.168.0.100:7210/api/ChatRoom/user/${userIdInt}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch chat rooms');
+        }
+        const roomsData = await response.json();
+        setRooms(roomsData);
+        setRoomsFetched(true);
+      }
+    } catch (error) {
+      console.error('Error fetching chat rooms:', error);
+    }
+  };
+
+  const combineData = (chatsData, roomsData) => {
+    const combined = [...chatsData, ...roomsData.map(room => ({...room, isRoom: true}))];
+    setCombinedData(combined);
+    setFilteredData(combined);
+  };
+
   const onChangeTextSearch = (item) => {
     setSearch(item);
-    const filtered = chats.filter(chat =>
-      chat.profile.fullName.toLowerCase().includes(item.toLowerCase())
-    );
-    setFilteredChats(filtered);
+    const filteredChats = combinedData.filter(data => {
+      if (data.roomName) {
+        return data.roomName.toLowerCase().includes(item.toLowerCase());
+      } else if (data.profile) {
+        return data.profile.fullName.toLowerCase().includes(item.toLowerCase());
+      }
+      return false;
+    });
+    setFilteredData(filteredChats);
   };
 
   const onPressMessage = (item) => {
@@ -122,6 +162,12 @@ export default function Messages({ navigation }) {
         profilePath: userProfile.profilePath,
         joinDate: userProfile.joinDate,
       },
+    });
+  };
+
+  const onPressRoom = (room) => {
+    navigation.navigate(StackNav.GroupChatScreen, {
+      data: room, // Correctly pass the room data to GroupChatScreen
     });
   };
 
@@ -155,42 +201,78 @@ export default function Messages({ navigation }) {
     );
   };
 
-  const renderItemMessage = ({ item }) => {
-    const latestMessage = item.messages[item.messages.length - 1];
-    return (
-      <TouchableOpacity
-        onPress={() => onPressMessage(item)}
-        style={[
-          localStyles.topContainerStyle,
-          localStyles.containerTopStyle,
-          { backgroundColor: colors.placeholderColor },
-        ]}>
-        <View style={localStyles.messageContent}>
-          <Image source={{ uri: item.profile?.profilePath || 'default_profile_path' }} style={localStyles.messageContainer} />
-          <View style={{ gap: moderateScale(5) }}>
-            <View style={styles.flexRow}>
-              <CText color={colors.mainColor} type={'b14'} numberOfLines={1}>
-                {item.profile?.fullName || 'Unknown'}
+  const renderItem = ({ item }) => {
+    if (item.isRoom) {
+      // Render chat room item
+      return (
+        <TouchableOpacity
+          onPress={() => onPressRoom(item)}
+          style={[
+            localStyles.topContainerStyle,
+            localStyles.containerTopStyle,
+            { backgroundColor: colors.placeholderColor },
+          ]}>
+          <View style={localStyles.messageContent}>
+            <Image source={{ uri: item.profilePath || 'default_profile_path' }} style={localStyles.messageContainer} />
+            <View style={{ gap: moderateScale(5) }}>
+              <View style={styles.flexRow}>
+                <CText color={colors.mainColor} type={'b14'} numberOfLines={1}>
+                  {item.roomName || 'Unknown Room'}
+                </CText>
+                {item.selected ? (
+                  <View
+                    style={[
+                      localStyles.dotStyle,
+                      { backgroundColor: colors.dotColor },
+                    ]}
+                  />
+                ) : null}
+              </View>
+              <CText type={'r14'} numberOfLines={1}>
+                {item.nbMembers} members
               </CText>
-              {item.selected ? (
-                <View
-                  style={[
-                    localStyles.dotStyle,
-                    { backgroundColor: colors.dotColor },
-                  ]}
-                />
-              ) : null}
             </View>
-            <CText type={'r14'} numberOfLines={1}>
-              {latestMessage.content}
-            </CText>
           </View>
-        </View>
-        <CText type={'r14'} numberOfLines={1} color={colors.grayScale5}>
-          {new Date(latestMessage.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-        </CText>
-      </TouchableOpacity>
-    );
+        </TouchableOpacity>
+      );
+    } else {
+      // Render individual chat item
+      const latestMessage = item.messages[item.messages.length - 1];
+      return (
+        <TouchableOpacity
+          onPress={() => onPressMessage(item)}
+          style={[
+            localStyles.topContainerStyle,
+            localStyles.containerTopStyle,
+            { backgroundColor: colors.placeholderColor },
+          ]}>
+          <View style={localStyles.messageContent}>
+            <Image source={{ uri: item.profile?.profilePath || 'default_profile_path' }} style={localStyles.messageContainer} />
+            <View style={{ gap: moderateScale(5) }}>
+              <View style={styles.flexRow}>
+                <CText color={colors.mainColor} type={'b14'} numberOfLines={1}>
+                  {item.profile?.fullName || 'Unknown'}
+                </CText>
+                {item.selected ? (
+                  <View
+                    style={[
+                      localStyles.dotStyle,
+                      { backgroundColor: colors.dotColor },
+                    ]}
+                  />
+                ) : null}
+              </View>
+              <CText type={'r14'} numberOfLines={1}>
+                {latestMessage.content}
+              </CText>
+            </View>
+          </View>
+          <CText type={'r14'} numberOfLines={1} color={colors.grayScale5}>
+            {new Date(latestMessage.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </CText>
+        </TouchableOpacity>
+      );
+    }
   };
 
   return (
@@ -213,8 +295,8 @@ export default function Messages({ navigation }) {
             onChangeText={onChangeTextSearch}
           />
           <FlatList
-            data={filteredChats}
-            renderItem={renderItemMessage}
+            data={filteredData}
+            renderItem={renderItem}
             showsVerticalScrollIndicator={false}
             bounces={false}
             pagingEnabled

@@ -66,7 +66,7 @@ export default function HomeTab({ navigation, route }) {
         throw new Error(`Failed to fetch posts: ${response.statusText}`);
       }
       const data = await response.json();
-      setPosts(data);
+       setPosts(data.reverse());
       setLoading(false);
       setIsRefreshing(false);
     } catch (error) {

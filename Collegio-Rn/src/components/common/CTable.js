@@ -41,7 +41,7 @@ const CoursesTable = ({major, navigation}) => {
     const fetchCourses = async () => {
       try {
         const response = await fetch(
-          `http://192.168.224.1:7210///api/University/majors/${major.id}/courses`,
+          `http://192.168.0.100:7210///api/University/majors/${major.id}/courses`,
         );
         const data = await response.json();
         setCourses(data);

@@ -14,6 +14,7 @@ import AntDesign from 'react-native-vector-icons/AntDesign';
 
 
 import { styles } from '../../themes';
+
 import { moderateScale, screenWidth, API_BASE_URL } from '../../common/constants';
 import CText from '../common/CText';
 import { Comment, Like, Share } from '../../assets/svgs';
