@@ -48,4 +48,5 @@ export default {
   faculty2:require('./faculty2.png'),
   faculty3:require('./faculty3.png'),
   faculty4:require('./faculty4.png'),
+  logo:require('./logo.png'),
 };

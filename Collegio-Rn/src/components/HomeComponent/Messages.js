@@ -12,7 +12,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useSelector } from 'react-redux';
 
 // Custom imports
-import { moderateScale } from '../../common/constants';
+import { moderateScale , API_BASE_URL } from '../../common/constants';
 import CSafeAreaView from '../common/CSafeAreaView';
 import CHeader from '../common/CHeader';
 import strings from '../../i18n/strings';
@@ -61,7 +61,7 @@ export default function Messages({ navigation }) {
 
   const fetchUserMessages = async (userId) => {
     try {
-      const response = await fetch(`http://192.168.1.6:7210/api/Message/${userId}`);
+      const response = await fetch(`${API_BASE_URL}/api/Message/${userId}`);
       if (!response.ok) {
         throw new Error('Failed to fetch messages');
       }
@@ -87,7 +87,7 @@ export default function Messages({ navigation }) {
     const profiles = {};
     for (const id of userIds) {
       try {
-        const response = await fetch(`http://192.168.1.6:7210/api/User/${id}/profile`);
+        const response = await fetch(`${API_BASE_URL}/api/User/${id}/profile`);
         if (!response.ok) {
           throw new Error('Failed to fetch user profile');
         }
@@ -121,7 +121,7 @@ export default function Messages({ navigation }) {
       const storedUserId = await AsyncStorage.getItem('userId');
       if (storedUserId !== null) {
         const userIdInt = parseInt(storedUserId, 10);
-        const response = await fetch(`http://192.168.0.100:7210/api/ChatRoom/user/${userIdInt}`);
+        const response = await fetch(`${API_BASE_URL}/api/ChatRoom/user/${userIdInt}`);
         if (!response.ok) {
           throw new Error('Failed to fetch chat rooms');
         }

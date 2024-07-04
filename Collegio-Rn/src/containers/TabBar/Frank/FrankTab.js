@@ -55,7 +55,7 @@ const FrankTab = () => {
 
   const callApi = async (question) => {
     try {
-      const response = await fetch('http://172.20.10.3:5000/ask', {
+      const response = await fetch('http://192.168.0.105:5000/ask', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -181,13 +181,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+
   },
   frankIcon: {
     marginRight: 8,
   },
   title: {
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: '900',
   },
   messagesList: {
     flexGrow: 1,

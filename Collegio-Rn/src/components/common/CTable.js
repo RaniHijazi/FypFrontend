@@ -9,7 +9,8 @@ import {
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import typography from '../../themes/typography';
-
+import  API_BASE_URL  from '../../common/constants';
+import logo from '../../assets/images/logo.png';
 const CTable = ({data, navigation}) => {
   return (
     <View style={styles.container}>
@@ -40,7 +41,7 @@ const CoursesTable = ({major, navigation}) => {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const response = await fetch(`http://172.20.10.3:7210///api/University/majors/${major.id}/courses`);
+        const response = await fetch(`http://192.168.0.105:7210/api/University/majors/${major.id}/courses`);
         const data = await response.json();
         setCourses(data);
       } catch (error) {
@@ -61,7 +62,7 @@ const CoursesTable = ({major, navigation}) => {
         style={[styles.row, expandedRow === 0 && styles.expandedRow]}
         onPress={() => toggleRowExpansion(0)}>
         <View style={styles.imageColumn}>
-          <Image source={{uri: major.imgUrl}} style={styles.rowImage} />
+          <Image source={logo} style={styles.rowImage} />
         </View>
         <View style={styles.textColumn}>
           <Text style={styles.rowText}>{major.name}</Text>

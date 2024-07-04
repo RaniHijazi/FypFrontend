@@ -15,7 +15,7 @@ class SignalRService {
     }
 
     this.connection = new HubConnectionBuilder()
-      .withUrl(`http://172.20.10.3:7210/chatHub?userId=${userId}`, {
+      .withUrl(`${API_BASE_URL}/chatHub?userId=${userId}`, {
         transport: HttpTransportType.WebSockets,
       })
       .configureLogging(LogLevel.Information)

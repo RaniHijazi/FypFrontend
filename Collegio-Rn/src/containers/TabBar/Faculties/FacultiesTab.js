@@ -23,7 +23,7 @@ export default function FacultiesTab({ navigation }) {
   const renderFacultyCard = ({ item }) => (
     <CCard
       facultyName={item.name}
-      facultyImage={item.image ? { uri: item.image } : images.defaultFaculty} // Assuming defaultFaculty is a placeholder image
+      facultyImage={item.imgUrl ? { uri: item.imgUrl } : images.defaultFaculty} // Assuming defaultFaculty is a placeholder image
       onPress={() => {
         navigation.navigate(StackNav.MajorsTab, { facultyId: item.id });
       }}

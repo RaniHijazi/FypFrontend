@@ -10,7 +10,7 @@ import { useSelector } from 'react-redux';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 // Custom imports
-import { moderateScale } from '../../common/constants';
+import { moderateScale , API_BASE_URL } from '../../common/constants';
 import CSafeAreaView from '../common/CSafeAreaView';
 import CHeader from '../common/CHeader';
 import strings from '../../i18n/strings';
@@ -34,7 +34,7 @@ export default function CreateGroupScreen({ navigation }) {
   const fetchUsers = async () => {
     try {
       console.log('Fetching users...');
-      const response = await fetch('http://192.168.1.7:7210/api/User/all');
+      const response = await fetch('http://192.168.0.105:7210/api/User/all');
       if (!response.ok) {
         throw new Error('Failed to fetch users');
       }
@@ -74,7 +74,7 @@ export default function CreateGroupScreen({ navigation }) {
       formData.append('Image', null); // Assuming you're not uploading an image
 
       try {
-        const response = await fetch('http://192.168.1.7:7210/api/ChatRoom/createandadd', {
+        const response = await fetch('http://192.168.0.105:7210/api/ChatRoom/createandadd', {
           method: 'POST',
           headers: {
             'Content-Type': 'multipart/form-data',
