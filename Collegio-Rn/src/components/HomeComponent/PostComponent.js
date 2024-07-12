@@ -22,7 +22,7 @@ import { StackNav } from '../../navigation/NavigationKeys';
 
 export default function PostComponent({ item, onPress, userId, updatePostLikes }) {
   const navigation = useNavigation();
-  const [isSaved, setIsSaved] = useState(false); // Initialize isSaved with false
+  const [isSaved, setIsSaved] = useState(false);
   const [liked, setLiked] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -30,8 +30,8 @@ export default function PostComponent({ item, onPress, userId, updatePostLikes }
 
   const checkIfLiked = async () => {
     try {
-      console.log(userId);
-       console.log(item);
+
+
       const response = await fetch(`${API_BASE_URL}/api/Post/${item.id}/hasLiked?userId=${userId}`);
       if (!response.ok) {
         throw new Error('Failed to check if post is liked');

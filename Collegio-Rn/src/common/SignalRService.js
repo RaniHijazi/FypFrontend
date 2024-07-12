@@ -5,9 +5,10 @@ class SignalRService {
   constructor() {
     this.connection = null;
     this.notificationHandler = null;
+    this.messageHandler = null;
   }
 
-  start = async () => {
+  start = async (messageHandler, notificationHandler) => {
     const userId = await AsyncStorage.getItem('userId');
     if (!userId) {
       console.log('SignalRService: User ID not found');
@@ -15,23 +16,34 @@ class SignalRService {
     }
 
     this.connection = new HubConnectionBuilder()
-      .withUrl(`${API_BASE_URL}/chatHub?userId=${userId}`, {
+      .withUrl(`http://192.168.0.106:7210/chatHub?userId=${userId}`, {
         transport: HttpTransportType.WebSockets,
       })
       .configureLogging(LogLevel.Information)
+      .withAutomaticReconnect()
       .build();
 
     try {
       await this.connection.start();
       console.log('SignalRService: SignalR Connected.');
-      this.registerNotificationHandler();
+      this.registerNotificationHandler(notificationHandler);
+      this.registerMessageHandler(messageHandler); // Register message handler after connection starts
     } catch (err) {
       console.log('SignalRService: SignalR Connection Error:', err);
-      setTimeout(this.start, 5000); // Retry connection after 5 seconds
+      setTimeout(() => this.start(messageHandler, notificationHandler), 5000); // Retry connection after 5 seconds
     }
 
     this.connection.onclose(async () => {
-      await this.start();
+      console.warn('SignalRService: Connection closed. Reconnecting...');
+      await this.start(messageHandler, notificationHandler);
+    });
+
+    this.connection.onreconnecting((error) => {
+      console.warn('SignalRService: Reconnecting...', error);
+    });
+
+    this.connection.onreconnected((connectionId) => {
+      console.log('SignalRService: Reconnected with connectionId:', connectionId);
     });
   };
 
@@ -51,6 +63,48 @@ class SignalRService {
         console.log('SignalRService: Notification handler is not set');
       }
     });
+  };
+
+  registerMessageHandler = (handler) => {
+    if (!this.connection) {
+      console.log('SignalRService: Connection not established yet');
+      return;
+    }
+    this.messageHandler = handler;
+    console.log('SignalRService: Message handler registered');
+    this.connection.on('ReceiveMessage', (senderId, recipientId, messageContent, timestamp) => {
+      const message = {
+        content: messageContent,
+        senderId: senderId,
+        recipientId: recipientId,
+        timestamp: new Date(timestamp)
+      };
+      console.log('SignalRService: Message received:', message);
+      if (this.messageHandler) {
+        console.log('SignalRService: Calling message handler with message:', message);
+        this.messageHandler(message);
+      } else {
+        console.log('SignalRService: Message handler is not set');
+      }
+    });
+  };
+
+  sendMessage = async (recipientId, messageContent) => {
+    if (!this.connection) {
+      console.log('SignalRService: Connection not established yet');
+      return;
+    }
+    const senderId = await AsyncStorage.getItem('userId');
+    if (!senderId) {
+      console.log('SignalRService: Sender ID not found');
+      return;
+    }
+    try {
+      await this.connection.invoke('SendMessage', parseInt(senderId), recipientId, messageContent);
+      console.log(`SignalRService: Message sent from ${senderId} to ${recipientId} with content: ${messageContent}`);
+    } catch (err) {
+      console.log('SignalRService: SendMessage Error:', err);
+    }
   };
 }
 

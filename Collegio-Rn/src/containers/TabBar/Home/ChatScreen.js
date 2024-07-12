@@ -11,7 +11,6 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import { useSelector } from 'react-redux';
 import Octicons from 'react-native-vector-icons/Octicons';
 import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
-import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Custom imports
@@ -19,12 +18,12 @@ import CSafeAreaView from '../../../components/common/CSafeAreaView';
 import CText from '../../../components/common/CText';
 import { styles } from '../../../themes';
 import CHeader from '../../../components/common/CHeader';
-import { checkPlatform, moderateScale , API_BASE_URL} from '../../../common/constants';
+import { checkPlatform, moderateScale, API_BASE_URL } from '../../../common/constants';
 import strings from '../../../i18n/strings';
 import CInput from '../../../components/common/CInput';
 import { SendIcon } from '../../../assets/svgs';
 
-let signalRConnection = null;
+import signalRService from '../../../common/SignalRService';  // Import SignalRService
 
 export default function ChatScreen({ route }) {
   const data = route?.params?.data;
@@ -57,12 +56,12 @@ export default function ChatScreen({ route }) {
   useEffect(() => {
     if (userId !== null && senderProfile !== null) {
       fetchAllMessages();
-      startSignalRConnection();
+      signalRService.start(handleReceiveMessage);
     }
 
     return () => {
-      if (signalRConnection) {
-        signalRConnection.off('ReceiveMessage');
+      if (signalRService.connection) {
+        signalRService.connection.off('ReceiveMessage');
       }
     };
   }, [userId, senderProfile]);
@@ -106,76 +105,18 @@ export default function ChatScreen({ route }) {
     }
   };
 
-  const startSignalRConnection = async () => {
-    if (!signalRConnection) {
-      console.log('Initializing SignalR connection...');
-      signalRConnection = new HubConnectionBuilder()
-        .withUrl(`${API_BASE_URL}/chatHub?userId=${userId}`)
-        .configureLogging(LogLevel.Information)
-        .withAutomaticReconnect()
-        .build();
+ const handleReceiveMessage = (message) => {
+   console.log('Received message:', message);
+   if (message.senderId !== userId) {
+     setMessages((prevMessages) => {
+       const newMessages = [...prevMessages, message].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+       console.log('Updated Messages:', newMessages);
+       return newMessages;
+     });
+     flatListRef.current?.scrollToEnd({ animated: true });
+   }
+ };
 
-      signalRConnection.on('ReceiveMessage', (messageContent, senderId, recipientId, timestamp) => {
-        const message = {
-          content: messageContent,
-          senderId: senderId,
-          recipientId: recipientId,
-          timestamp: new Date(timestamp)
-        };
-        console.log('Received message:', message);
-        setMessages((prevMessages) => {
-          const newMessages = [...prevMessages, message].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-          console.log('New Messages:', newMessages);
-          return newMessages;
-        });
-        flatListRef.current?.scrollToEnd({ animated: true });
-      });
-      console.log('Received message:', message);
-      try {
-        await signalRConnection.start();
-        console.log('SignalR Connected.');
-      } catch (error) {
-        console.error('Error establishing SignalR connection:', error);
-        setTimeout(startSignalRConnection, 5000); // Retry connection after 5 seconds
-      }
-
-      signalRConnection.onclose(async () => {
-        console.warn('SignalR connection closed. Reconnecting...');
-        await startSignalRConnection();
-      });
-
-      signalRConnection.onreconnecting((error) => {
-        console.warn('SignalR reconnecting...', error);
-      });
-
-      signalRConnection.onreconnected((connectionId) => {
-        console.log('SignalR reconnected with connectionId:', connectionId);
-      });
-
-      try {
-        const connectedUsers = await signalRConnection.invoke('GetConnectedUsers');
-        console.log('Connected users:', connectedUsers);
-      } catch (error) {
-        console.error('Error fetching connected users:', error);
-      }
-    } else {
-      signalRConnection.on('ReceiveMessage', (messageContent, senderId, recipientId, timestamp) => {
-        const message = {
-          content: messageContent,
-          senderId: senderId,
-          recipientId: recipientId,
-          timestamp: new Date(timestamp)
-        };
-        console.log('Received message:', message);
-        setMessages((prevMessages) => {
-          const newMessages = [...prevMessages, message].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-          console.log('New Messages:', newMessages);
-          return newMessages;
-        });
-        flatListRef.current?.scrollToEnd({ animated: true });
-      });
-    }
-  };
 
   const sendMessage = async () => {
     if (chat.trim() === '') {
@@ -194,21 +135,14 @@ export default function ChatScreen({ route }) {
       timestamp: new Date().toISOString(),
     };
 
+    console.log('Sending message:', newMessage);
+
     // Optimistically update the UI
     setMessages((prevMessages) => [...prevMessages, newMessage]);
     flatListRef.current?.scrollToEnd({ animated: true });
 
     try {
-      const url = `${API_BASE_URL}/api/Message/send?senderId=${userId}&recipientId=${data.id}&messageContent=${encodeURIComponent(chat)}`;
-      const response = await fetch(url, {
-        method: 'POST',
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to send message: ${errorText}`);
-      }
-
+      await signalRService.sendMessage(data.id, chat);
       setChat('');
     } catch (error) {
       console.error('Error sending message:', error.message);

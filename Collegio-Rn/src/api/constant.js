@@ -121,9 +121,7 @@ export const popularCategoriesData = [
   strings.all,
   strings.profiles,
   strings.posts,
-  strings.institutes,
   strings.videos,
-  strings.links,
   strings.tags,
 ];
 

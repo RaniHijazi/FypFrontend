@@ -1,22 +1,23 @@
-import {FlatList, StyleSheet, TouchableOpacity} from 'react-native';
-import React, {useState} from 'react';
-import {useSelector} from 'react-redux';
+import { FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { useSelector } from 'react-redux';
 
 //custom imports
-import {moderateScale} from '../../common/constants';
+import { moderateScale } from '../../common/constants';
 import CText from '../common/CText';
-import {styles} from '../../themes';
+import { styles } from '../../themes';
 
 export default function PopularCategory(props) {
-  const {chipsData, borderColor = null, bgColor, textColor} = props;
+  const { chipsData, borderColor = null, bgColor, textColor, onSelectCategory } = props;
   const colors = useSelector(state => state.theme.theme);
   const [select, setSelect] = useState('Posts');
 
   const onPressSelect = item => {
     setSelect(item);
+    onSelectCategory(item); // Update the selected category in the parent component
   };
 
-  const renderItem = ({item}) => {
+  const renderItem = ({ item }) => {
     return (
       <TouchableOpacity
         style={[
@@ -34,8 +35,8 @@ export default function PopularCategory(props) {
             select === item
               ? textColor
               : colors.dark
-              ? colors.white
-              : colors.black
+                ? colors.white
+                : colors.black
           }
           numberOfLines={1}>
           {item}
