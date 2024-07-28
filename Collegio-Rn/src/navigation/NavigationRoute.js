@@ -3,6 +3,8 @@ import HomeTab from '../containers/TabBar/Home/HomeTab';
 import ProfileTab from '../containers/TabBar/Profile/ProfileTab';
 import SearchTab from '../containers/TabBar/Search/SearchTab';
 import AddPostTab from '../containers/TabBar/AddPost/AddPostTab';
+import AddSubPostTab from '../containers/TabBar/AddPost/AddSubPostTab';
+import AddCommunityTab from '../containers/TabBar/Communities/AddCommunityTab';
 import NotificationTab from '../containers/TabBar/Notification/NotificationTab';
 import MajorsTab from '../containers/TabBar/Faculties/MajorsTab';
 import FacultiesTab from '../containers/TabBar/Faculties/FacultiesTab';
@@ -43,7 +45,7 @@ import changePassword from '../containers/TabBar/Profile/ChangePassword';
 import Documents from '../containers/TabBar/Profile/Documents';
 import CreateChat from '../components/HomeComponent/CreateChat';
 import CreateGroupScreen from '../components/HomeComponent/CreateGroupScreen';
-
+import SubCommunity from '../containers/TabBar/Communities/SubCommunity';
 
 
 export const StackRoute = {
@@ -68,6 +70,9 @@ export const StackRoute = {
   CreateChat,
   CreateGroupScreen,
   AddPostTab,
+  AddSubPostTab,
+  AddCommunityTab,
+  SubCommunity,
 
 };
 

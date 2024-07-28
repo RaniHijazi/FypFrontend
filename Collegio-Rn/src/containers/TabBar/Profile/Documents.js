@@ -164,6 +164,12 @@ export default function Documents({ navigation }) {
                 <>
                   <Text style={localStyles.modalTitle}>Description</Text>
                   <Text style={localStyles.modalText}>{selectedDocument.description}</Text>
+                  {selectedDocument.note && (
+                    <>
+                      <Text style={localStyles.noteTitle}>Note</Text>
+                      <Text style={localStyles.noteText}>{selectedDocument.note}</Text>
+                    </>
+                  )}
                   <TouchableOpacity
                     style={[localStyles.button, localStyles.buttonClose]}
                     onPress={() => setModalVisible(!modalVisible)}
@@ -290,6 +296,8 @@ const localStyles = StyleSheet.create({
   },
   buttonClose: {
     backgroundColor: '#2196F3',
+    marginTop:5,
+
   },
   textStyle: {
     color: 'white',
@@ -305,6 +313,18 @@ const localStyles = StyleSheet.create({
   modalText: {
     marginBottom: 15,
     textAlign: 'center',
+  },
+  noteTitle: {
+    marginTop: 7,
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    color: 'red',
+  },
+  noteText: {
+    color: 'red',
+    textAlign: 'center',
+    marginBottom:7,
   },
   fullScreenModal: {
     flex: 1,

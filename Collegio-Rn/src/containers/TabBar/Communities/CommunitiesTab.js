@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import { StackNav } from '../../../navigation/NavigationKeys';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   StyleSheet,
@@ -9,6 +10,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useSelector } from 'react-redux';
+import Octicons from 'react-native-vector-icons/Octicons';
 import CText from '../../../components/common/CText';
 import CustomHeader from '../../../components/common/CustomHeader';
 import CSafeAreaView from '../../../components/common/CSafeAreaView';
@@ -103,7 +105,14 @@ export default function CommunitiesTab({ navigation }) {
   const renderItem = ({ item }) => {
     return (
       <TouchableOpacity
-        onPress={() => {}}
+        onPress={() => navigation.navigate(StackNav.SubCommunity, {
+          communityId: item.id,
+          imageUrl: item.imageUrl,
+          name: item.name,
+          nbMembers: item.nbMembers,
+          description: item.description,
+          onJoinLeave: handleJoinLeave // Pass the callback function as a prop
+        })}
         style={[
           localStyles.wrapContainer,
           {
@@ -135,7 +144,7 @@ export default function CommunitiesTab({ navigation }) {
   const renderPostComponent = ({ item, index }) => {
     return (
       <View style={[localStyles.postContainer, index === 0 && localStyles.firstPostContainer]}>
-        <PostComponent item={item} onPress={() => {}} userId={userId} updatePostLikes={(postId, newLikeCount) => {
+        <PostComponent item={item} onPress={() => { }} userId={userId} updatePostLikes={(postId, newLikeCount) => {
           setPosts(prevPosts =>
             prevPosts.map(post => {
               if (post.id === postId) {
@@ -152,6 +161,17 @@ export default function CommunitiesTab({ navigation }) {
   const filteredCommunities = activeTab === 'Home'
     ? communities.filter(community => community.name.toLowerCase().includes(search.toLowerCase()))
     : exploreCommunities.filter(community => community.name.toLowerCase().includes(search.toLowerCase()));
+
+  const navigateToAddPost = () => {
+    navigation.navigate(StackNav.AddCommunityTab);
+  };
+
+  // Callback function to refetch communities
+  const handleJoinLeave = useCallback(() => {
+    if (communityId) {
+      fetchCommunities(communityId);
+    }
+  }, [communityId]);
 
   return (
     <CSafeAreaView style={[localStyles.container, { backgroundColor: colors.background }]}>
@@ -194,6 +214,11 @@ export default function CommunitiesTab({ navigation }) {
           }
         />
       )}
+      <TouchableOpacity
+        style={[localStyles.addPostButton, { backgroundColor: colors.primary }]}
+        onPress={navigateToAddPost}>
+        <Octicons name={'plus'} size={moderateScale(20)} color={colors.white} />
+      </TouchableOpacity>
     </CSafeAreaView>
   );
 }
@@ -256,5 +281,24 @@ const localStyles = StyleSheet.create({
   },
   firstPostContainer: {
     marginTop: moderateScale(20), // Add margin to the top of the first post
+  },
+  addPostButton: {
+    position: 'absolute',
+    bottom: moderateScale(20),
+    right: moderateScale(20),
+    width: moderateScale(60),
+    height: moderateScale(60),
+    borderRadius: moderateScale(30),
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    zIndex: 1,
   },
 });

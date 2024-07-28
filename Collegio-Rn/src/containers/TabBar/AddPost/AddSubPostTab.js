@@ -2,6 +2,7 @@ import { Image, StyleSheet, TouchableOpacity, View, Alert, ActivityIndicator, Mo
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRoute } from '@react-navigation/native';
 
 import CSafeAreaView from '../../../components/common/CSafeAreaView';
 import CText from '../../../components/common/CText';
@@ -15,16 +16,17 @@ import CInput from '../../../components/common/CInput';
 import images from '../../../assets/images';
 import AddPost from './AddPost';
 
-export default function AddPostTab({ navigation }) {
+export default function AddSubPostTab({ navigation }) {
   const colors = useSelector(state => state.theme.theme);
+  const route = useRoute();
+  const { communityId: routeCommunityId } = route.params || {};
   const [post, setPost] = useState('');
-  const [selectPost, setSelectPost] = useState(true);
   const [image, setImage] = useState(null);
   const [userId, setUserId] = useState(null);
-  const [communityId, setCommunityId] = useState(null);
+  const [routeCommunityIdState, setRouteCommunityIdState] = useState(routeCommunityId); // New state for route communityId
   const [loading, setLoading] = useState(false);
   const [imagePreviewVisible, setImagePreviewVisible] = useState(false);
-
+  const [MaincommunityId, setMainCommunityId] = useState();
   useEffect(() => {
     const retrieveUserId = async () => {
       try {
@@ -33,7 +35,7 @@ export default function AddPostTab({ navigation }) {
           const userIdInt = parseInt(storedUserId, 10);
           setUserId(userIdInt);
           fetchUserById(userIdInt);
-          console.log('Retrieved :', userIdInt);
+          console.log('Retrieved userId:', userIdInt);
         }
       } catch (error) {
         console.error('Error retrieving userId from AsyncStorage:', error);
@@ -51,8 +53,8 @@ export default function AddPostTab({ navigation }) {
       }
 
       const userData = await response.json();
-      setCommunityId(userData.communityId);
 
+      setMainCommunityId(userData.communityId );
     } catch (error) {
       console.error('Error fetching user data:', error.message);
     }
@@ -66,66 +68,13 @@ export default function AddPostTab({ navigation }) {
     setPost(text);
   };
 
-  const onPressPost = () => {
-    setSelectPost(true);
-    setImage(null);
-  };
-
-  const onPressStory = () => {
-    setSelectPost(false);
-    setImage(null);
-  };
-
   const onImageSelected = selectedImage => {
     setImage(selectedImage);
     setImagePreviewVisible(true); // Show the modal when an image is selected
   };
 
-  const onSubmitStory = async () => {
-    if (!userId) {
-      Alert.alert('Error', 'User ID not found');
-      return;
-    }
-
-    setLoading(true);
-
-    const formData = new FormData();
-    if (image) {
-      formData.append('Story', {
-        uri: image.path,
-        type: image.mime,
-        name: 'story.jpg',
-      });
-    }
-    formData.append('UserId', userId);
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/User/uploadStory`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        body: formData,
-      });
-
-      if (response.ok) {
-        Alert.alert('Success', 'Story uploaded successfully');
-        setImage(null);
-        setImagePreviewVisible(false);
-        navigation.navigate(TabNav.HomeTab, { refresh: true }); // Add refresh param
-      } else {
-        const errorData = await response.json();
-        Alert.alert('Error', errorData.message || 'Failed to upload story');
-      }
-    } catch (error) {
-      Alert.alert('Error', error.message || 'Failed to upload story');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const onSubmitPost = async () => {
-    if (!userId || !communityId) {
+    if (!userId || !routeCommunityIdState) {
       Alert.alert('Error', 'User ID or Community ID not found');
       return;
     }
@@ -140,12 +89,13 @@ export default function AddPostTab({ navigation }) {
         name: 'photo.jpg',
       });
     }
-    formData.append('CommunityId', communityId); // Use retrieved CommunityId
-    formData.append('UserId', userId); // Use retrieved UserId
-    formData.append('Description', post);
+    formData.append('CommunityId', MaincommunityId); // Community ID from route params
+    formData.append('presubcommunity_id', routeCommunityIdState); // Include presubcommunity_id
+    formData.append('UserId', userId); // User ID from AsyncStorage
+    formData.append('Description', post); // Post description
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/Post/create`, {
+      const response = await fetch(`${API_BASE_URL}/api/Post/CreateSubPost`, {
         method: 'POST',
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -154,27 +104,24 @@ export default function AddPostTab({ navigation }) {
       });
 
       if (response.ok) {
-        Alert.alert('Success', 'Post created successfully');
+        Alert.alert('Success', 'Subpost created successfully');
         setImage(null);
         setImagePreviewVisible(false);
         navigation.navigate(TabNav.HomeTab, { refresh: true }); // Add refresh param
       } else {
         const errorData = await response.json();
-        Alert.alert('Error', errorData.message || 'Failed to create post');
+        Alert.alert('Error', errorData.message || 'Failed to create subpost');
       }
     } catch (error) {
-      Alert.alert('Error', error.message || 'Failed to create post');
+      Alert.alert('Error', error.message || 'Failed to create subpost');
     } finally {
       setLoading(false);
     }
   };
 
+
   const onSubmit = () => {
-    if (selectPost) {
-      onSubmitPost();
-    } else {
-      onSubmitStory();
-    }
+    onSubmitPost();
   };
 
   const IsLeftIcon = () => {
@@ -229,52 +176,6 @@ export default function AddPostTab({ navigation }) {
           />
           <AddPost onImageSelected={onImageSelected} />
         </View>
-        <View
-          style={[
-            localStyles.topContainer,
-            { backgroundColor: colors.placeholderColor },
-          ]}>
-          <TouchableOpacity
-            style={[
-              localStyles.contentStyle,
-              {
-                backgroundColor: selectPost
-                  ? colors.dark
-                    ? colors.primary
-                    : colors.black
-                  : null,
-              },
-            ]}
-            onPress={onPressPost}>
-            <CText
-              align={'center'}
-              type={'b13'}
-              numberOfLines={1}
-              color={selectPost ? colors.white : colors.mainColor}>
-              {strings.post}
-            </CText>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              localStyles.contentStyle,
-              {
-                backgroundColor: !selectPost
-                  ? colors.dark
-                    ? colors.primary
-                    : colors.black
-                  : null,
-              },
-            ]}
-            onPress={onPressStory}>
-            <CText
-              align={'center'}
-              type={'b13'}
-              numberOfLines={1}
-              color={!selectPost ? colors.white : colors.mainColor}>
-              {strings.story}
-            </CText>
-          </TouchableOpacity>
-        </View>
         {loading && (
           <View style={localStyles.loadingOverlay}>
             <ActivityIndicator size="large" color={colors.primary} />
@@ -327,21 +228,6 @@ const localStyles = StyleSheet.create({
     ...styles.pv15,
     borderRadius: moderateScale(15),
     ...styles.itemsStart,
-  },
-  topContainer: {
-    ...styles.flexRow,
-    width: '64%',
-    borderRadius: moderateScale(50),
-    ...styles.p10,
-    ...styles.center,
-    ...styles.selfCenter,
-    marginBottom: '25%',
-  },
-  contentStyle: {
-    width: moderateScale(85),
-    ...styles.mr5,
-    ...styles.pv10,
-    borderRadius: moderateScale(16),
   },
   loadingOverlay: {
     position: 'absolute',

@@ -1,3 +1,4 @@
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -5,12 +6,16 @@ import {
   StyleSheet,
   Image,
   TouchableOpacity,
+  Modal,
+  Text,
+  Button,
+  Alert,
 } from 'react-native';
 import { useSelector } from 'react-redux';
 import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import ImagePicker from 'react-native-image-crop-picker';
 import images from '../../assets/images';
 import { styles } from '../../themes';
 import CText from '../common/CText';
@@ -24,9 +29,13 @@ export default function ProfileComponent() {
   const colors = useSelector((state) => state.theme.theme);
   const navigation = useNavigation();
   const [profile, setProfile] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [imageOptionsVisible, setImageOptionsVisible] = useState(false);
+  const [fullImageVisible, setFullImageVisible] = useState(false);
+  const [userId, setUserId] = useState(null);
 
   useEffect(() => {
-    retrieveUserId(); // Fetch user profile once component mounts
+    retrieveUserId();
   }, []);
 
   const retrieveUserId = async () => {
@@ -34,6 +43,7 @@ export default function ProfileComponent() {
       const storedUserId = await AsyncStorage.getItem('userId');
       if (storedUserId !== null) {
         const userIdInt = parseInt(storedUserId, 10);
+        setUserId(userIdInt);
         fetchUserProfile(userIdInt);
       } else {
         console.warn('User ID not found in AsyncStorage');
@@ -60,6 +70,87 @@ export default function ProfileComponent() {
     navigation.navigate(StackNav.Setting);
   };
 
+  const handleProfileImagePress = () => {
+    setModalVisible(true);
+  };
+
+  const handleViewProfileImage = () => {
+    setModalVisible(false);
+    setFullImageVisible(true);
+  };
+
+  const handleSelectProfileImage = () => {
+    setModalVisible(false);
+    setImageOptionsVisible(true);
+  };
+
+  const handleSelectImage = (source) => {
+    if (source === 'camera') {
+      ImagePicker.openCamera({
+        width: 300,
+        height: 300,
+        cropping: true,
+      })
+        .then(image => {
+          console.log('Selected image from camera:', image);
+          uploadProfileImage(image);
+        })
+        .catch(error => {
+          console.error('Error selecting image from camera:', error);
+        });
+    } else {
+      ImagePicker.openPicker({
+        width: 300,
+        height: 300,
+        mediaType: 'photo',
+        includeBase64: true,
+      })
+        .then(image => {
+          console.log('Selected image from gallery:', image);
+          uploadProfileImage(image);
+        })
+        .catch(error => {
+          console.error('Error selecting image from gallery:', error);
+        });
+    }
+    setImageOptionsVisible(false);
+  };
+
+  const uploadProfileImage = async (image) => {
+    if (!image || !image.path || !image.mime) {
+      Alert.alert('Error', 'Image data is missing');
+      console.error('Error: Image data is missing', image);
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('UserId', userId);
+    formData.append('Image', {
+      uri: image.path,
+      type: image.mime,
+      name: image.filename || `image-${Date.now()}.jpg`,
+    });
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/User/saveurl`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      if (!res.ok) {
+        throw new Error('Failed to upload profile image');
+      }
+      const data = await res.json();
+      console.log('Profile image uploaded successfully:', data);
+      fetchUserProfile(userId);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to upload profile image');
+      console.error('Error uploading profile image:', error);
+    }
+  };
+
   const RenderComponent = ({ title, text }) => (
     <TouchableOpacity
       style={[
@@ -84,7 +175,7 @@ export default function ProfileComponent() {
 
   if (!profile) {
     return (
-      <View style={styles.center}>
+      <View style={localStyles.center}>
         <CText type={'m14'} align={'center'} color={colors.grayScale5}>
           Loading profile...
         </CText>
@@ -101,7 +192,9 @@ export default function ProfileComponent() {
           end={{ x: 1, y: 1 }}
           style={localStyles.itemInnerContainer}
         >
-          <Image source={{ uri: profile.profilePath }} style={localStyles.userImgStyle} />
+          <TouchableOpacity onPress={handleProfileImagePress}>
+            <Image source={{ uri: profile.profilePath }} style={localStyles.userImgStyle} />
+          </TouchableOpacity>
         </LinearGradient>
       </ImageBackground>
       <View style={styles.ph20}>
@@ -149,6 +242,76 @@ export default function ProfileComponent() {
           borderColor={colors.dark ? colors.black : colors.white}
         />
       </View>
+
+      {/* Modal for options */}
+      <Modal
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={localStyles.modalOverlay}>
+          <View style={localStyles.modalContent}>
+            <TouchableOpacity
+             style={[localStyles.closeButton, { left: 10, right: 'auto' }]}
+              onPress={() => setModalVisible(false)}
+            >
+              <Ionicons
+                name={'arrow-back'}
+                size={moderateScale(24)}
+                color={colors.dark ? colors.primary : colors.black}
+              />
+            </TouchableOpacity>
+            <View style={localStyles.modalItem}>
+              <Button title="View Profile Image" onPress={handleViewProfileImage} style={localStyles.modalItembuttons}/>
+            </View>
+            <View style={localStyles.modalItem}>
+              <Button title="Select Profile Image" onPress={handleSelectProfileImage}style={localStyles.modalItembuttons} />
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal for image selection options */}
+      <Modal
+        transparent={true}
+        visible={imageOptionsVisible}
+        onRequestClose={() => setImageOptionsVisible(false)}
+      >
+        <View style={localStyles.modalOverlay}>
+          <View style={localStyles.modalContentWide}>
+            <TouchableOpacity
+              style={[localStyles.closeButton, { left: 10, right: 'auto' }]}
+              onPress={() => setImageOptionsVisible(false)}
+            >
+              <Ionicons
+                name={'arrow-back'}
+                size={moderateScale(24)}
+                color={colors.dark ? colors.primary : colors.black}
+              />
+            </TouchableOpacity>
+            <View style={localStyles.modalItem}>
+              <Button title="Camera" onPress={() => handleSelectImage('camera')} style={localStyles.modalItembuttons} />
+            </View>
+            <View style={localStyles.modalItem}>
+              <Button title="Gallery" onPress={() => handleSelectImage('gallery')}  style={localStyles.modalItembuttons}/>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal for full-screen image view */}
+      <Modal
+        visible={fullImageVisible}
+        onRequestClose={() => setFullImageVisible(false)}
+      >
+        <View style={localStyles.fullScreenModal}>
+          <Image
+            source={{ uri: profile.profilePath }}
+            style={localStyles.fullScreenImage}
+          />
+
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -183,5 +346,55 @@ const localStyles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    width: '70%',
+    padding: 30,
+    backgroundColor: 'white',
+    borderRadius: 15,
+    alignItems: 'center',
+  },
+  modalContentWide: {
+    width: '50%', // Different width for the second modal
+    padding: 30,
+    backgroundColor: 'white',
+    borderRadius: 15,
+    alignItems: 'center',
+  },
+  modalItem: {
+    marginBottom: 15,
+  },
+  modalItembuttons: {
+    borderRadius: 25,
+  },
+  modalTitle: {
+    fontSize: 18,
+    marginBottom: 10,
+  },
+  fullScreenModal: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'black',
+  },
+  fullScreenImage: {
+    width: '100%',
+    height: '80%',
+    resizeMode: 'contain',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+  },
+  closeButtonText: {
+    fontSize: 18,
+    color: 'black',
   },
 });

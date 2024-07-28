@@ -1,7 +1,8 @@
 import {Image, StyleSheet, View} from 'react-native';
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Ensure you have installed this package
 
-//custom imports
+// Custom imports
 import CSafeAreaView from '../../components/common/CSafeAreaView';
 import CHeader from '../../components/common/CHeader';
 import {styles} from '../../themes';
@@ -25,6 +26,24 @@ export default function SetNewPassword({navigation}) {
   const [errorNewPassword, setErrorNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [errorConfirmPassword, setErrorConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [userId, setUserId] = useState(null);
+
+  useEffect(() => {
+    const retrieveUserId = async () => {
+      try {
+        const storedUserId = await AsyncStorage.getItem('userId');
+        if (storedUserId !== null) {
+          setUserId(parseInt(storedUserId, 10));
+          console.log('Retrieved userId:', storedUserId);
+        }
+      } catch (error) {
+        console.error('Error retrieving userId from AsyncStorage:', error);
+      }
+    };
+
+    retrieveUserId();
+  }, []);
 
   const onChangeOldPassword = item => {
     const {msg} = validatePassword(item);
@@ -37,14 +56,50 @@ export default function SetNewPassword({navigation}) {
     setNewPassword(item);
     setErrorNewPassword(msg);
   };
+
   const onChangeConfirmPassword = item => {
     const {msg} = validateConfirmPassword(item.trim(), newPassword);
     setConfirmPassword(item);
     setErrorConfirmPassword(msg);
   };
 
-  const onPressNext = () => {
-    navigation.navigate(AuthNav.PasswordChange);
+  const onPressNext = async () => {
+    console.log('onPressNext triggered');
+    if (errorOldPassword || errorNewPassword || errorConfirmPassword) {
+      console.log('Validation errors exist:', { errorOldPassword, errorNewPassword, errorConfirmPassword });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      console.log('Sending request to change password');
+      const response = await fetch('http://192.168.0.106:7210/api/User/ChangePassword', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          UserId: userId,
+          OldPassword: oldPassword,
+          NewPassword: newPassword,
+        }),
+      });
+
+      const data = await response.json();
+      console.log('Response:', data);
+
+      if (response.ok) {
+        navigation.navigate(AuthNav.PasswordChange); // Adjust to your navigation structure
+      } else {
+        setErrorConfirmPassword(data.message || 'Failed to change password');
+      }
+    } catch (error) {
+      console.error('An error occurred:', error);
+      setErrorConfirmPassword('An error occurred. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -66,6 +121,7 @@ export default function SetNewPassword({navigation}) {
             onChangeText={onChangeOldPassword}
             _errorText={errorOldPassword}
             keyboardType={'default'}
+            secureTextEntry
           />
           <CInput
             placeholder={strings.newPassword}
@@ -73,6 +129,7 @@ export default function SetNewPassword({navigation}) {
             onChangeText={onChangeNewPassword}
             _errorText={errorNewPassword}
             keyboardType={'default'}
+            secureTextEntry
           />
           <CInput
             placeholder={strings.confirmNewPassword}
@@ -80,11 +137,16 @@ export default function SetNewPassword({navigation}) {
             onChangeText={onChangeConfirmPassword}
             keyboardType={'default'}
             _errorText={errorConfirmPassword}
+            secureTextEntry
           />
           <CButton
             title={strings.next}
             textType={'s18'}
-            onPress={onPressNext}
+            onPress={() => {
+              console.log('Button pressed');
+              onPressNext();
+            }}
+            loading={loading}
           />
         </View>
       </CKeyBoardAvoidWrapper>

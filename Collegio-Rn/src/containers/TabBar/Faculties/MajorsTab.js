@@ -53,6 +53,7 @@ export default function MajorsTab({ route, navigation }) {
 const localStyles = StyleSheet.create({
   safeArea: {
     flex: 1,
+    width: '100%',
   },
   searchContainer: {
     flexDirection: 'row',

@@ -34,6 +34,8 @@ export default function StackNavigation() {
       <Stack.Screen name={StackNav.ViewPost} component={StackRoute.ViewPost} />
       <Stack.Screen name={StackNav.ProfileTab} component={StackRoute.ProfileTab} />
        <Stack.Screen name={StackNav.AddPostTab} component={StackRoute.AddPostTab} />
+       <Stack.Screen name={StackNav.AddSubPostTab} component={StackRoute.AddSubPostTab} />
+       <Stack.Screen name={StackNav.AddCommunityTab} component={StackRoute.AddCommunityTab} />
       <Stack.Screen name={StackNav.Messages} component={StackRoute.Messages} />
       <Stack.Screen name={StackNav.CreateChat} component={StackRoute.CreateChat} />
       <Stack.Screen name={StackNav.CreateGroupScreen} component={StackRoute.CreateGroupScreen} />
@@ -41,6 +43,11 @@ export default function StackNavigation() {
         name={StackNav.ChatScreen}
         component={StackRoute.ChatScreen}
       />
+
+      <Stack.Screen
+              name={StackNav. SubCommunity}
+              component={StackRoute. SubCommunity}
+            />
       <Stack.Screen
               name={StackNav.GroupChatScreen}
               component={StackRoute.GroupChatScreen}

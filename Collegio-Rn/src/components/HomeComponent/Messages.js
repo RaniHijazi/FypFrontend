@@ -7,12 +7,13 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useSelector } from 'react-redux';
+import { useFocusEffect } from '@react-navigation/native';
 
 // Custom imports
-import { moderateScale , API_BASE_URL } from '../../common/constants';
+import { moderateScale, API_BASE_URL } from '../../common/constants';
 import CSafeAreaView from '../common/CSafeAreaView';
 import CHeader from '../common/CHeader';
 import strings from '../../i18n/strings';
@@ -32,10 +33,22 @@ export default function Messages({ navigation }) {
   const [chatsFetched, setChatsFetched] = useState(false);
   const [roomsFetched, setRoomsFetched] = useState(false);
 
+  const fetchData = async () => {
+    setChatsFetched(false);
+    setRoomsFetched(false);
+    await fetchChatRooms();
+    await fetchChatsWithMessages();
+  };
+
   useEffect(() => {
-    fetchChatsWithMessages();
-    fetchChatRooms();
+    fetchData();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchData(); // Fetch data when the screen is focused
+    }, [])
+  );
 
   useEffect(() => {
     if (chatsFetched && roomsFetched) {
@@ -50,8 +63,9 @@ export default function Messages({ navigation }) {
         const userIdInt = parseInt(storedUserId, 10);
         const messagesData = await fetchUserMessages(userIdInt);
         const userProfiles = await fetchUserProfiles(messagesData, userIdInt);
-        const chatsData = groupMessagesByChat(messagesData, userProfiles, userIdInt);
+        const { chatsData, roomsData } = groupMessagesByChat(messagesData, userProfiles, userIdInt, rooms);
         setChats(chatsData);
+        setRooms(roomsData);
         setChatsFetched(true);
       }
     } catch (error) {
@@ -100,22 +114,6 @@ export default function Messages({ navigation }) {
     return profiles;
   };
 
-  const groupMessagesByChat = (messages, profiles, userId) => {
-    const chats = {};
-    messages.forEach(message => {
-      const chatId = message.senderId === userId ? message.recipientId : message.senderId;
-      if (!chats[chatId]) {
-        chats[chatId] = {
-          id: chatId,
-          messages: [],
-          profile: profiles[chatId],
-        };
-      }
-      chats[chatId].messages.push(message);
-    });
-    return Object.values(chats);
-  };
-
   const fetchChatRooms = async () => {
     try {
       const storedUserId = await AsyncStorage.getItem('userId');
@@ -134,8 +132,51 @@ export default function Messages({ navigation }) {
     }
   };
 
+  const groupMessagesByChat = (messages, profiles, userId, roomsData) => {
+    const chats = {};
+    const rooms = {};
+
+    messages.forEach(message => {
+      if (message.roomId) {
+        // Group messages by room
+        if (!rooms[message.roomId]) {
+          rooms[message.roomId] = {
+            id: message.roomId,
+            messages: [],
+            roomName: message.roomName || 'Unknown Room',
+            profilePath: message.profilePath || 'default_profile_path',
+            isRoom: true,
+          };
+        }
+        rooms[message.roomId].messages.push(message);
+      } else {
+        // Group messages by individual chat
+        const chatId = message.senderId === userId ? message.recipientId : message.senderId;
+        if (!chats[chatId]) {
+          chats[chatId] = {
+            id: chatId,
+            messages: [],
+            profile: profiles[chatId],
+          };
+        }
+        chats[chatId].messages.push(message);
+      }
+    });
+
+    return {
+      chatsData: Object.values(chats),
+      roomsData: Object.values(rooms),
+    };
+  };
+
   const combineData = (chatsData, roomsData) => {
-    const combined = [...chatsData, ...roomsData.map(room => ({...room, isRoom: true}))];
+    const combined = [...chatsData, ...roomsData];
+    // Sort combined data by the timestamp of the latest message
+    combined.sort((a, b) => {
+      const latestMessageA = a.messages[a.messages.length - 1]?.timestamp;
+      const latestMessageB = b.messages[b.messages.length - 1]?.timestamp;
+      return new Date(latestMessageB) - new Date(latestMessageA);
+    });
     setCombinedData(combined);
     setFilteredData(combined);
   };
@@ -143,7 +184,7 @@ export default function Messages({ navigation }) {
   const onChangeTextSearch = (item) => {
     setSearch(item);
     const filteredChats = combinedData.filter(data => {
-      if (data.roomName) {
+      if (data.isRoom) {
         return data.roomName.toLowerCase().includes(item.toLowerCase());
       } else if (data.profile) {
         return data.profile.fullName.toLowerCase().includes(item.toLowerCase());
@@ -202,6 +243,8 @@ export default function Messages({ navigation }) {
   };
 
   const renderItem = ({ item }) => {
+    const latestMessage = item.messages[item.messages.length - 1];
+
     if (item.isRoom) {
       // Render chat room item
       return (
@@ -229,15 +272,17 @@ export default function Messages({ navigation }) {
                 ) : null}
               </View>
               <CText type={'r14'} numberOfLines={1}>
-                {item.nbMembers} members
+                {latestMessage?.content}
               </CText>
             </View>
           </View>
+          <CText type={'r14'} numberOfLines={1} color={colors.grayScale5}>
+            {latestMessage && new Date(latestMessage.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </CText>
         </TouchableOpacity>
       );
     } else {
       // Render individual chat item
-      const latestMessage = item.messages[item.messages.length - 1];
       return (
         <TouchableOpacity
           onPress={() => onPressMessage(item)}
@@ -263,12 +308,12 @@ export default function Messages({ navigation }) {
                 ) : null}
               </View>
               <CText type={'r14'} numberOfLines={1}>
-                {latestMessage.content}
+                {latestMessage?.content}
               </CText>
             </View>
           </View>
           <CText type={'r14'} numberOfLines={1} color={colors.grayScale5}>
-            {new Date(latestMessage.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            {latestMessage && new Date(latestMessage.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </CText>
         </TouchableOpacity>
       );
