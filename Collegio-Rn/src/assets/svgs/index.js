@@ -34,6 +34,11 @@ import SearchWhite from './searchWhite.svg';
 import CommunityIconWhite from './CommunityIconWhite.svg';
 import CommunityIconLight from './CommunityIconLight.svg';
 
+import GoldBadge from './goldBadge.svg';
+import BlueBadge from './blueBadge.svg';
+import RedBadge from './redBadge.svg';
+import GreenBadge from './greenBadge.svg';
+import PinkBadge from './pinkBadge.svg';
 
 export {
   HomeIcon,
@@ -71,4 +76,9 @@ export {
   SearchWhite,
   CommunityIconWhite,
   CommunityIconLight,
+  GoldBadge,
+  BlueBadge,
+  RedBadge,
+  GreenBadge,
+  PinkBadge,
 };

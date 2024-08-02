@@ -21,7 +21,7 @@ import strings from '../../i18n/strings';
 import { styles } from '../../themes';
 import CText from '../common/CText';
 import { moderateScale, API_BASE_URL } from '../../common/constants';
-import { SendIcon } from '../../assets/svgs';
+import { SendIcon, GoldBadge, BlueBadge, GreenBadge, PinkBadge, RedBadge } from '../../assets/svgs';
 
 export default function ViewPost({ route }) {
   const item = route?.params?.item;
@@ -31,11 +31,11 @@ export default function ViewPost({ route }) {
   const [comment, setComment] = useState('');
   const [comments, setComments] = useState([]);
 
-
   const fetchComments = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/Post/post/${item.id}`);
       const data = await response.json();
+      console.log('Fetched comments:', data); // Debugging log
       setComments(data);
 
       const updatedLiked = {};
@@ -94,7 +94,7 @@ export default function ViewPost({ route }) {
         )
       );
     } catch (error) {
-      console.error('Errorr updating like status:', error);
+      console.error('Error updating like status:', error);
     }
   };
 
@@ -128,8 +128,7 @@ export default function ViewPost({ route }) {
 
       setComment('');
 
-      // Call fetchComments to update the comments list after adding a new comment
-      fetchComments();
+      fetchComments(); // Call fetchComments to update the comments list after adding a new comment
     } catch (error) {
       console.error('Error adding comment:', error);
     }
@@ -153,8 +152,46 @@ export default function ViewPost({ route }) {
     );
   };
 
+  const renderBadge = (level) => {
+    switch (level) {
+      case 1:
+        return (
+          <View style={localStyles.badge}>
+            <PinkBadge />
+          </View>
+        );
+      case 2:
+        return (
+          <View style={localStyles.badge}>
+            <GreenBadge />
+          </View>
+        );
+      case 3:
+        return (
+          <View style={localStyles.badge}>
+            <RedBadge />
+          </View>
+        );
+      case 4:
+        return (
+          <View style={localStyles.badge}>
+            <GoldBadge />
+          </View>
+        );
+      case 5:
+        return (
+          <View style={localStyles.badge}>
+            <BlueBadge />
+          </View>
+        );
+      default:
+        return null;
+    }
+  };
+
   const renderItem = ({ item }) => {
     const isLiked = liked[item.id];
+    console.log('Comment item:', item); // Debugging log
     return (
       <TouchableOpacity
         style={[
@@ -168,9 +205,12 @@ export default function ViewPost({ route }) {
             style={localStyles.imgContainer}
           />
           <View style={{ gap: moderateScale(5) }}>
-            <CText type={'b13'} color={colors.mainColor} numberOfLines={1}>
-              {item.userName}
-            </CText>
+            <View style={styles.flexRow}>
+              <CText type={'b13'} color={colors.mainColor} numberOfLines={1}>
+                {item.userName}
+              </CText>
+              {renderBadge(item.level)}
+            </View>
             <CText type={'r13'} color={colors.mainColor} numberOfLines={1}>
               {item.description}
             </CText>
@@ -330,5 +370,8 @@ const localStyles = StyleSheet.create({
   contentContainerStyle: {
     flex: 1,
     paddingHorizontal: moderateScale(20),
+  },
+  badge: {
+    marginLeft: moderateScale(5),
   },
 });
