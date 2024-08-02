@@ -9,6 +9,7 @@ import messaging from '@react-native-firebase/messaging';
 import firebase from '@react-native-firebase/app';
 import '@react-native-firebase/auth';
 import '@react-native-firebase/firestore';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Firebase Configuration
 const RNfirebaseConfig = {
@@ -18,7 +19,7 @@ const RNfirebaseConfig = {
   storageBucket: "testing-3a202.appspot.com",
   messagingSenderId: "1083458603626",
   appId: "1:1083458603626:android:a32ef8bff6197540bc5813",
-  databaseURL: "https://testing-3a202.firebaseio.com"  // Add this line
+  databaseURL: "https://testing-3a202.firebaseio.com"
 };
 
 // Asynchronous Firebase Initialization with Logging
@@ -33,6 +34,41 @@ const initializeFirebase = async () => {
     }
   } catch (error) {
     console.error('Error initializing Firebase:', error);
+  }
+};
+
+const getUserId = async () => {
+  try {
+    const userId = await AsyncStorage.getItem('userId');
+    return userId ? parseInt(userId) : null;
+  } catch (e) {
+    console.error("Failed to fetch the user ID from AsyncStorage:", e);
+  }
+};
+
+const sendFcmTokenToServer = async (userId, fcmToken) => {
+  try {
+    const response = await fetch('http://172.20.10.3:7210/api/User/updateFcmToken', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userId,
+        fcmToken,
+      }),
+    });
+
+    const text = await response.text(); // Get response as text
+
+    try {
+      const data = JSON.parse(text); // Try to parse as JSON
+      console.log('FCM token sent to server:', data);
+    } catch (error) {
+      console.log('Non-JSON response:', text); // Log non-JSON response
+    }
+  } catch (error) {
+    console.error('Error sending FCM token to server:', error);
   }
 };
 
@@ -65,6 +101,13 @@ const App = () => {
           const fcm = await messaging().getToken();
           console.log('FCM Token retrieved:', fcm);
           setFcmToken(fcm);
+
+          // Retrieve user ID and send FCM token to server
+          const userId = await getUserId();
+          if (userId) {
+            await sendFcmTokenToServer(userId, fcm);
+          }
+
         } catch (error) {
           console.error("Error getting FCM token:", error);
         }

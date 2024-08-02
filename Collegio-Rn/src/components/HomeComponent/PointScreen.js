@@ -40,12 +40,12 @@ const PointScreen = () => {
   const [dailyComments, setDailyComments] = useState(0);
   const [level, setLevel] = useState(0); // Initial level set to 0
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const userId = 5; // Replace with the actual user ID you want to fetch points for
+  const userId = 1; // Replace with the actual user ID you want to fetch points for
 
   useEffect(() => {
     const fetchPoints = async () => {
       try {
-        const response = await fetch(`http://192.168.0.102:7210/api/User/${userId}/points`);
+        const response = await fetch(`http://172.20.10.3:7210/api/User/${userId}/points`);
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
@@ -58,7 +58,7 @@ const PointScreen = () => {
 
     const fetchDailyLikes = async () => {
       try {
-        const response = await fetch(`http://192.168.0.102:7210/api/User/${userId}/daily-likes`);
+        const response = await fetch(`http://172.20.10.3:7210/api/User/${userId}/daily-likes`);
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
@@ -71,7 +71,7 @@ const PointScreen = () => {
 
     const fetchDailyPosts = async () => {
       try {
-        const response = await fetch(`http://192.168.0.102:7210/api/User/${userId}/daily-posts`);
+        const response = await fetch(`http://172.20.10.3:7210/api/User/${userId}/daily-posts`);
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
@@ -84,7 +84,7 @@ const PointScreen = () => {
 
     const fetchDailyComments = async () => {
       try {
-        const response = await fetch(`http://192.168.0.102:7210/api/User/${userId}/daily-comments`);
+        const response = await fetch(`http://172.20.10.3:7210/api/User/${userId}/daily-comments`);
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
@@ -97,7 +97,7 @@ const PointScreen = () => {
 
     const fetchLevel = async () => {
       try {
-        const response = await fetch(`http://192.168.0.102:7210/api/User/${userId}/level`);
+        const response = await fetch(`http://172.20.10.3:7210/api/User/${userId}/level`);
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }

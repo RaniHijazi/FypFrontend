@@ -32,6 +32,7 @@ import NotificationWhite from './notificationWhite.svg';
 import OfficeWhite from './OfficeWhite.svg';
 import SearchWhite from './searchWhite.svg';
 import CommunityIconWhite from './CommunityIconWhite.svg';
+import CommunityIconLight from './CommunityIconLight.svg';
 
 
 export {
@@ -69,4 +70,5 @@ export {
   OfficeWhite,
   SearchWhite,
   CommunityIconWhite,
+  CommunityIconLight,
 };

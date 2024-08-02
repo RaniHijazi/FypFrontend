@@ -108,7 +108,7 @@ export default function SearchTab({ navigation }) {
 
   const handleSearchProfiles = async () => {
     try {
-      const response = await fetch(`http://192.168.5.1:7210/api/User/all`);
+      const response = await fetch(`http://172.20.10.3:7210/api/User/all`);
       if (!response.ok) {
         throw new Error(`Failed to fetch user data: ${response.statusText}`);
       }
@@ -128,7 +128,7 @@ export default function SearchTab({ navigation }) {
       return;
     }
     try {
-      const response = await fetch(`http://192.168.5.1:7210/api/Post/PrePosts?PreCommunityId=${communityId}`);
+      const response = await fetch(`http://172.20.10.3:7210/api/Post/PrePosts?PreCommunityId=${communityId}`);
       if (!response.ok) {
         throw new Error(`Failed to fetch posts: ${response.statusText}`);
       }
