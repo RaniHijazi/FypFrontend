@@ -259,7 +259,7 @@ const localStyles = StyleSheet.create({
   },
   mainContainer: {
     ...styles.ph20,
-    
+
     ...styles.flexGrow1,
     ...styles.justifyBetween,
   },

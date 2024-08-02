@@ -1,16 +1,26 @@
 import React from 'react';
-import { View, StyleSheet, Text } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { useIsFocused } from '@react-navigation/native';
+import LinearGradient from 'react-native-linear-gradient';
 
+// Custom imports
+import { TabNav } from '../../navigation/NavigationKeys.js';
+import { StackNav } from '../../navigation/NavigationKeys';
+import { AuthNav } from '../../navigation/NavigationKeys';
 export interface ProgressBarProps {
   progress: number; // Progress value from 0 to 100
 }
 
-const CProgressbar: React.FC<ProgressBarProps> = ({ progress }) => {
+const CProgressbar: React.FC<ProgressBarProps> = ({ navigation,progress }) => {
+    const onPressProgressBar = () => {
+        navigation.navigate(StackNav.PointScreen);
+      };
   return (
+  <TouchableOpacity onPress={onPressProgressBar}>
     <View style={styles.container}>
       <View style={styles.textContainer}>
         <Text style={styles.text}>Next Level</Text>
-        <Text style={styles.text}>125/500</Text>
+        <Text style={styles.text}>125/1000</Text>
       </View>
       <View style={styles.progressContainer}>
         <View style={styles.progressBar}>
@@ -19,6 +29,7 @@ const CProgressbar: React.FC<ProgressBarProps> = ({ progress }) => {
         <Text style={[styles.text, styles.progressText]}>{progress}%</Text>
       </View>
     </View>
+    </TouchableOpacity>
   );
 };
 

@@ -228,6 +228,9 @@ export default function HomeTab({ navigation, route }) {
   const onPressSendIcon = () => {
     navigation.navigate(StackNav.Messages);
   };
+  const onPressProgressBar = () => {
+      navigation.navigate(StackNav.PointScreen);
+    };
 
   const onPressStory = user => {
     const initialUserIndex = groupedStories.findIndex(u => u.userId === user.userId);
@@ -335,8 +338,8 @@ export default function HomeTab({ navigation, route }) {
             style={localStyles.logoContainer}
           />
           <View style={localStyles.progressContainer}>
-            <CProgressbar progress={progress} />
-          </View>
+                  <CProgressbar navigation={navigation} progress={progress} />
+              </View>
           <TouchableOpacity onPress={navigateToProfile} style={styles.ml10}>
             <Image
               source={profilePath ? { uri: profilePath } : null}

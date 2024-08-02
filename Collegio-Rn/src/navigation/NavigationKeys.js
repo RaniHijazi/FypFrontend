@@ -25,6 +25,8 @@ export const StackNav = {
    AddSubPostTab:'AddSubPostTab',
    SubCommunity:'SubCommunity',
    AddCommunityTab:"AddCommunityTab",
+   PointScreen:"PointScreen",
+   CProgressbar: "CProgressbar"
 
 
 };

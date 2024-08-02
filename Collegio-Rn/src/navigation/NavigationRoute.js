@@ -46,8 +46,8 @@ import Documents from '../containers/TabBar/Profile/Documents';
 import CreateChat from '../components/HomeComponent/CreateChat';
 import CreateGroupScreen from '../components/HomeComponent/CreateGroupScreen';
 import SubCommunity from '../containers/TabBar/Communities/SubCommunity';
-
-
+import PointScreen from '../components/HomeComponent/PointScreen';
+import CProgressbar from '../components/common/CProgressbar';
 export const StackRoute = {
   Splash,
   OnBoarding,
@@ -73,6 +73,8 @@ export const StackRoute = {
   AddSubPostTab,
   AddCommunityTab,
   SubCommunity,
+  PointScreen,
+  CProgressbar
 
 };
 
