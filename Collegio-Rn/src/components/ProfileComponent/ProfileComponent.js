@@ -7,9 +7,8 @@ import {
   Image,
   TouchableOpacity,
   Modal,
-  Text,
-  Button,
   Alert,
+  Button,
 } from 'react-native';
 import { useSelector } from 'react-redux';
 import LinearGradient from 'react-native-linear-gradient';
@@ -24,6 +23,7 @@ import PopularCategory from '../HomeComponent/PopularCategory';
 import { moderateScale, screenWidth, API_BASE_URL } from '../../common/constants';
 import { profileListData } from '../../api/constant';
 import { StackNav } from '../../navigation/NavigationKeys';
+import { GoldBadge, BlueBadge, GreenBadge, PinkBadge, RedBadge } from '../../assets/svgs';
 
 export default function ProfileComponent() {
   const colors = useSelector((state) => state.theme.theme);
@@ -151,6 +151,23 @@ export default function ProfileComponent() {
     }
   };
 
+  const renderBadge = (level) => {
+    switch (level) {
+      case 1:
+        return <PinkBadge style={localStyles.badgeStyle} />;
+      case 2:
+        return <GreenBadge style={localStyles.badgeStyle} />;
+      case 3:
+        return <RedBadge style={localStyles.badgeStyle} />;
+      case 4:
+        return <GoldBadge style={localStyles.badgeStyle} />;
+      case 5:
+        return <BlueBadge style={localStyles.badgeStyle} />;
+      default:
+        return null;
+    }
+  };
+
   const RenderComponent = ({ title, text }) => (
     <TouchableOpacity
       style={[
@@ -198,15 +215,17 @@ export default function ProfileComponent() {
         </LinearGradient>
       </ImageBackground>
       <View style={styles.ph20}>
-        <CText
-          type={'b18'}
-          align={'center'}
-          style={localStyles.contentStyle}
-          numberOfLines={1}
-          color={colors.mainColor}
-        >
-          {profile.fullName}
-        </CText>
+        <View style={localStyles.nameBadgeContainer}>
+          <CText
+            type={'b18'}
+            align={'center'}
+            numberOfLines={1}
+            color={colors.mainColor}
+          >
+            {profile.fullName}
+          </CText>
+          {renderBadge(profile.level)}
+        </View>
         <CText
           type={'m14'}
           align={'center'}
@@ -252,7 +271,7 @@ export default function ProfileComponent() {
         <View style={localStyles.modalOverlay}>
           <View style={localStyles.modalContent}>
             <TouchableOpacity
-             style={[localStyles.closeButton, { left: 10, right: 'auto' }]}
+              style={[localStyles.closeButton, { left: 10, right: 'auto' }]}
               onPress={() => setModalVisible(false)}
             >
               <Ionicons
@@ -262,10 +281,10 @@ export default function ProfileComponent() {
               />
             </TouchableOpacity>
             <View style={localStyles.modalItem}>
-              <Button title="View Profile Image" onPress={handleViewProfileImage} style={localStyles.modalItembuttons}/>
+              <Button title="View Profile Image" onPress={handleViewProfileImage} />
             </View>
             <View style={localStyles.modalItem}>
-              <Button title="Select Profile Image" onPress={handleSelectProfileImage}style={localStyles.modalItembuttons} />
+              <Button title="Select Profile Image" onPress={handleSelectProfileImage} />
             </View>
           </View>
         </View>
@@ -290,10 +309,10 @@ export default function ProfileComponent() {
               />
             </TouchableOpacity>
             <View style={localStyles.modalItem}>
-              <Button title="Camera" onPress={() => handleSelectImage('camera')} style={localStyles.modalItembuttons} />
+              <Button title="Camera" onPress={() => handleSelectImage('camera')} />
             </View>
             <View style={localStyles.modalItem}>
-              <Button title="Gallery" onPress={() => handleSelectImage('gallery')}  style={localStyles.modalItembuttons}/>
+              <Button title="Gallery" onPress={() => handleSelectImage('gallery')} />
             </View>
           </View>
         </View>
@@ -309,7 +328,6 @@ export default function ProfileComponent() {
             source={{ uri: profile.profilePath }}
             style={localStyles.fullScreenImage}
           />
-
         </View>
       </Modal>
     </View>
@@ -334,8 +352,14 @@ const localStyles = StyleSheet.create({
     left: '30%',
     top: '50%',
   },
-  contentStyle: {
+  nameBadgeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginTop: '22%',
+  },
+  badgeStyle: {
+    marginLeft: moderateScale(5),
   },
   mainContentStyle: {
     borderRadius: moderateScale(15),
@@ -361,7 +385,7 @@ const localStyles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContentWide: {
-    width: '50%', // Different width for the second modal
+    width: '50%',
     padding: 30,
     backgroundColor: 'white',
     borderRadius: 15,
@@ -369,13 +393,6 @@ const localStyles = StyleSheet.create({
   },
   modalItem: {
     marginBottom: 15,
-  },
-  modalItembuttons: {
-    borderRadius: 25,
-  },
-  modalTitle: {
-    fontSize: 18,
-    marginBottom: 10,
   },
   fullScreenModal: {
     flex: 1,
@@ -392,9 +409,5 @@ const localStyles = StyleSheet.create({
     position: 'absolute',
     top: 10,
     right: 10,
-  },
-  closeButtonText: {
-    fontSize: 18,
-    color: 'black',
   },
 });

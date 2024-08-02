@@ -32,7 +32,11 @@ import NotificationWhite from './notificationWhite.svg';
 import OfficeWhite from './OfficeWhite.svg';
 import SearchWhite from './searchWhite.svg';
 import CommunityIconWhite from './CommunityIconWhite.svg';
-
+import GoldBadge from './goldBadge.svg';
+import BlueBadge from './blueBadge.svg';
+import RedBadge from './redBadge.svg';
+import GreenBadge from './greenBadge.svg';
+import PinkBadge from './pinkBadge.svg';
 
 export {
   HomeIcon,
@@ -69,4 +73,9 @@ export {
   OfficeWhite,
   SearchWhite,
   CommunityIconWhite,
+  GoldBadge,
+  BlueBadge,
+  RedBadge,
+  GreenBadge,
+  PinkBadge,
 };

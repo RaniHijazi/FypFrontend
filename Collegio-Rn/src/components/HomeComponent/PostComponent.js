@@ -12,12 +12,10 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import { useNavigation } from '@react-navigation/native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 
-
 import { styles } from '../../themes';
-
 import { moderateScale, screenWidth, API_BASE_URL } from '../../common/constants';
 import CText from '../common/CText';
-import { Comment, Like, Share } from '../../assets/svgs';
+import { Comment, Like, Share, GoldBadge, BlueBadge, GreenBadge, PinkBadge, RedBadge } from '../../assets/svgs';
 import { StackNav } from '../../navigation/NavigationKeys';
 
 export default function PostComponent({ item, onPress, userId, updatePostLikes }) {
@@ -30,8 +28,6 @@ export default function PostComponent({ item, onPress, userId, updatePostLikes }
 
   const checkIfLiked = async () => {
     try {
-
-
       const response = await fetch(`${API_BASE_URL}/api/Post/${item.id}/hasLiked?userId=${userId}`);
       if (!response.ok) {
         throw new Error('Failed to check if post is liked');
@@ -47,13 +43,13 @@ export default function PostComponent({ item, onPress, userId, updatePostLikes }
 
   const likePost = async () => {
     try {
-          const response = await fetch(`${API_BASE_URL}/api/Post/LikePost?post_id=${item.id}&user_id=${userId}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({}),
-          });
+      const response = await fetch(`${API_BASE_URL}/api/Post/LikePost?post_id=${item.id}&user_id=${userId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({}),
+      });
       if (!response.ok) {
         throw new Error('Failed to like post');
       }
@@ -78,7 +74,6 @@ export default function PostComponent({ item, onPress, userId, updatePostLikes }
       updatePostLikes(item.id, item.likesCount - 1);
     } catch (error) {
       console.error('Error disliking post:', error);
-
     }
   };
 
@@ -136,6 +131,43 @@ export default function PostComponent({ item, onPress, userId, updatePostLikes }
     );
   };
 
+  const renderBadge = (level) => {
+    switch (level) {
+      case 1:
+        return (
+          <View style={localStyles.badge}>
+            <PinkBadge />
+          </View>
+        );
+      case 2:
+        return (
+          <View style={localStyles.badge}>
+            <GreenBadge />
+          </View>
+        );
+      case 3:
+        return (
+          <View style={localStyles.badge}>
+            <RedBadge />
+          </View>
+        );
+      case 4:
+        return (
+          <View style={localStyles.badge}>
+            <GoldBadge />
+          </View>
+        );
+      case 5:
+        return (
+          <View style={localStyles.badge}>
+            <BlueBadge />
+          </View>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <View
       style={[
@@ -147,13 +179,16 @@ export default function PostComponent({ item, onPress, userId, updatePostLikes }
         <TouchableOpacity style={styles.flexRow} onPress={onPress}>
           <Image source={{ uri: item.userProfileImageUrl }} style={localStyles.postImgStyle} />
           <View>
-            <CText
-              type={'b14'}
-              color={colors.dark ? colors.white : colors.black}
-              numberOfLines={1}
-            >
-              {item.userFullName}
-            </CText>
+            <View style={styles.flexRow}>
+              <CText
+                type={'b14'}
+                color={colors.dark ? colors.white : colors.black}
+                numberOfLines={1}
+              >
+                {item.userFullName}
+              </CText>
+              {renderBadge(item.level)}
+            </View>
             <CText color={colors.grayScale5} numberOfLines={1} type={'m12'}>
               {item.timestamp}
             </CText>
@@ -264,5 +299,8 @@ const localStyles = StyleSheet.create({
     borderRadius: moderateScale(10),
     ...styles.mh5,
     ...styles.mt10,
+  },
+  badge: {
+    marginLeft: moderateScale(5),
   },
 });
