@@ -103,12 +103,12 @@ const CoursesTable = ({major, navigation}) => {
 
 const styles = StyleSheet.create({
   container: {
-    width: '94%',
+    width: '99%',
     backgroundColor: '#fff',
     borderWidth: 0,
     borderColor: '#F5F5F5',
     borderRadius: 5,
-    marginBottom: 10, // Added to create space between items
+    marginBottom: 8, // Added to create space between items
   },
   listContainer: {
     paddingBottom: 20,
@@ -161,7 +161,8 @@ const styles = StyleSheet.create({
     ...typography.fontSizes.f12,
     ...typography.fontWeights.Regular,
     color: '#000',
-    marginLeft: 5,
+    marginLeft: 8,
+
   },
   rowImage: {
     width: 33,
@@ -180,6 +181,7 @@ const styles = StyleSheet.create({
     color: '#000000',
     marginBottom: 5,
     marginTop: 5,
+
   },
   detailsText: {
     ...typography.fontSizes.f12,

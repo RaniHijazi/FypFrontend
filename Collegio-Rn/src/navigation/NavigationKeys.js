@@ -22,6 +22,11 @@ export const StackNav = {
    CreateChat:'CreateChat',
    CreateGroupScreen:'CreateGroupScreen',
    AddPostTab:'AddPostTab',
+   AddSubPostTab:'AddSubPostTab',
+   SubCommunity:'SubCommunity',
+   AddCommunityTab:"AddCommunityTab",
+   PointScreen:"PointScreen",
+   CProgressbar: "CProgressbar"
 
 
 };

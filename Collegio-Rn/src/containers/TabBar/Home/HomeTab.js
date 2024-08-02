@@ -7,6 +7,7 @@ import {
   View,
   ActivityIndicator,
   Text,
+  Alert,
 } from 'react-native';
 import Octicons from 'react-native-vector-icons/Octicons';
 import { useSelector } from 'react-redux';
@@ -17,6 +18,7 @@ import LinearGradient from 'react-native-linear-gradient';
 // Custom imports
 import { TabNav } from '../../../navigation/NavigationKeys.js';
 import { StackNav } from '../../../navigation/NavigationKeys';
+import { AuthNav } from '../../../navigation/NavigationKeys';
 import CSafeAreaView from '../../../components/common/CSafeAreaView';
 import CText from '../../../components/common/CText';
 import CProgressbar from '../../../components/common/CProgressbar';
@@ -40,24 +42,45 @@ export default function HomeTab({ navigation, route }) {
   const [communityId, setCommunityId] = useState(null);
   const [profilePath, setProfilePath] = useState(null);
 
-  const fetchUserById = async (id) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/User/${id}`);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch user data: ${response.statusText}`);
-      }
+    const fetchUserById = async (id) => {
+        try {
+          const response = await fetch(`${API_BASE_URL}/api/User/${id}`);
+          if (!response.ok) {
+            throw new Error(`Failed to fetch user data: ${response.statusText}`);
+          }
 
-      const userData = await response.json();
-      setCommunityId(userData.communityId);
-      setProfilePath(userData.profilePath);
-      fetchPrePosts(userData.communityId);
-      fetchUserStories(id); // Fetch user-specific stories
-    } catch (error) {
-      console.error('Error fetching user data:', error.message);
-      setLoading(false);
-      setIsRefreshing(false);
-    }
-  };
+          const userData = await response.json();
+
+          if (userData.memberStatus !== "Active") {
+            Alert.alert(
+              "Alert",
+              "The account has been deactivated. Please review administration.",
+              [
+                { text: "OK", onPress: () => {
+                    setTimeout(() => {
+                      navigation.reset({
+                        index: 0,
+                         routes: [{name: StackNav.AuthNavigation}],
+                      });
+                    }, 1000);
+                  }
+                }
+              ],
+              { cancelable: false }
+            );
+            return;
+          }
+
+          setCommunityId(userData.communityId);
+          setProfilePath(userData.profilePath);
+          fetchPrePosts(userData.communityId);
+          fetchUserStories(id); // Fetch user-specific stories
+        } catch (error) {
+          console.error('Error fetching user data:', error.message);
+          setLoading(false);
+          setIsRefreshing(false);
+        }
+      };
 
   const fetchPrePosts = async (communityId) => {
     try {
@@ -83,8 +106,6 @@ export default function HomeTab({ navigation, route }) {
         throw new Error(`Failed to fetch stories: ${response.statusText}`);
       }
       const data = await response.json();
-
-      // Verify and filter out stories with missing essential fields
       const filteredData = data.filter(story => story.userId && story.userFullName && story.userProfileImageUrl && story.stories);
 
       setStories(filteredData);
@@ -207,6 +228,9 @@ export default function HomeTab({ navigation, route }) {
   const onPressSendIcon = () => {
     navigation.navigate(StackNav.Messages);
   };
+  const onPressProgressBar = () => {
+      navigation.navigate(StackNav.PointScreen);
+    };
 
   const onPressStory = user => {
     const initialUserIndex = groupedStories.findIndex(u => u.userId === user.userId);
@@ -242,7 +266,6 @@ export default function HomeTab({ navigation, route }) {
 
   const renderItem = ({ item, index }) => {
     if (index === 0) {
-
       if (userStories.length > 0) {
         return (
           <TouchableOpacity
@@ -263,6 +286,12 @@ export default function HomeTab({ navigation, route }) {
               source={profilePath ? { uri: profilePath } : images.userImage1}
               style={localStyles.adminImageStyle}
             />
+            <TouchableOpacity
+              style={localStyles.addPostIconContainer}
+              onPress={navigateToAddPost}
+            >
+              <Octicons name={'plus'} size={moderateScale(17)} color="#fff" />
+            </TouchableOpacity>
             <Text style={localStyles.userFullName}>Your story</Text>
           </View>
         );
@@ -289,7 +318,7 @@ export default function HomeTab({ navigation, route }) {
             ]}
           />
         </LinearGradient>
-        <Text style={localStyles.userFullName}>{item.userFullName}</Text>
+        <Text style={localStyles.storyUserFullName} numberOfLines={1}>{item.userFullName}</Text>
       </TouchableOpacity>
     );
   };
@@ -309,8 +338,8 @@ export default function HomeTab({ navigation, route }) {
             style={localStyles.logoContainer}
           />
           <View style={localStyles.progressContainer}>
-            <CProgressbar progress={progress} />
-          </View>
+                  <CProgressbar navigation={navigation} progress={progress} />
+              </View>
           <TouchableOpacity onPress={navigateToProfile} style={styles.ml10}>
             <Image
               source={profilePath ? { uri: profilePath } : null}
@@ -440,6 +469,16 @@ const localStyles = StyleSheet.create({
     fontWeight: 'bold',
     fontFamily: 'Arial',
   },
+  storyUserFullName: {
+    marginTop: moderateScale(5),
+    color: '#000',
+    textAlign: 'center',
+    fontSize: moderateScale(12),
+    fontWeight: 'bold',
+    fontFamily: 'Arial',
+    maxWidth: moderateScale(60),
+    overflow: 'hidden',
+  },
   addPostButton: {
     position: 'absolute',
     bottom: moderateScale(20),
@@ -457,5 +496,18 @@ const localStyles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
+    zIndex: 1,
+  },
+  addPostIconContainer: {
+    position: 'absolute',
+    bottom: moderateScale(15),
+    right: moderateScale(3),
+    width: moderateScale(17),
+    height: moderateScale(17),
+    borderRadius: moderateScale(15),
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#000',
+    opacity: 0.7,
   },
 });

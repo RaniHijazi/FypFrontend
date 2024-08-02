@@ -6,9 +6,10 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useDispatch, useSelector} from 'react-redux';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 //custom imports
 import CSafeAreaView from '../../../components/common/CSafeAreaView';
@@ -25,11 +26,45 @@ import CHeader from '../../../components/common/CHeader';
 import LogOutModal from '../../../components/models/LogOutModal';
 import {StackNav} from '../../../navigation/NavigationKeys';
 
+const API_BASE_URL = 'http://192.168.0.106:7210'; // Update with your actual base URL
+
 export default function Setting({navigation}) {
   const color = useSelector(state => state.theme.theme);
   const [isEnabled, setIsEnabled] = useState(!!color.dark);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [userId, setUserId] = useState(null);
+  const [profile, setProfile] = useState({ fullName: '', profilePath: '' });
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    const retrieveUserId = async () => {
+      try {
+        const storedUserId = await AsyncStorage.getItem('userId');
+        if (storedUserId !== null) {
+          const userIdInt = parseInt(storedUserId, 10);
+          setUserId(userIdInt);
+          fetchUserProfile(userIdInt);
+        }
+      } catch (error) {
+        console.error('Error retrieving userId from AsyncStorage:', error);
+      }
+    };
+
+    retrieveUserId();
+  }, []);
+
+  const fetchUserProfile = async (userId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/User/${userId}/profile`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch user profile');
+      }
+      const data = await response.json();
+      setProfile(data);
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    }
+  };
 
   const onPressLightTheme = () => {
     setAsyncStorageData(THEME, 'light');
@@ -66,6 +101,7 @@ export default function Setting({navigation}) {
   const onPressLogOut = () => {
     setIsModalVisible(!isModalVisible);
   };
+
   const onPressCancelBtn = () => {
     setIsModalVisible(false);
   };
@@ -129,7 +165,7 @@ export default function Setting({navigation}) {
           ]}>
           <View style={localStyles.contentStyle}>
             <Image
-              source={images.profilePhoto}
+              source={profile.profilePath ? { uri: profile.profilePath } : images.profilePhoto}
               style={localStyles.imgContainer}
             />
             <CText
@@ -137,7 +173,7 @@ export default function Setting({navigation}) {
               color={color.mainColor}
               numberOfLines={2}
               style={localStyles.textStyle}>
-              {strings.alexTsimikas}
+              {profile.fullName || strings.alexTsimikas}
             </CText>
           </View>
           <RightIcon />

@@ -50,9 +50,11 @@ export default function CHeader(props) {
         {title}
       </CText>
       <TouchableOpacity onPress={onPressRight}>
-        <CText type={'s18'} style={containerStyle}>
-          {rightIcon ? rightIcon : null}
-        </CText>
+        {rightIcon && (
+          <View style={localStyles.rightIconContainer}>
+            {rightIcon}
+          </View>
+        )}
       </TouchableOpacity>
     </View>
   );
@@ -68,5 +70,11 @@ const localStyles = StyleSheet.create({
     height: moderateScale(32),
     borderRadius: moderateScale(16),
     ...styles.center,
+  },
+  rightIconContainer: {
+    width: moderateScale(40),
+    height: moderateScale(40),
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

@@ -1,12 +1,47 @@
-import React from 'react';
-import { View, TextInput, StyleSheet, Text, TouchableOpacity, Image } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, TextInput, StyleSheet, Text, TouchableOpacity, Image} from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import images from '../../assets/images';
 import { moderateScale } from '../../common/constants';
 import { StackNav } from '../../navigation/NavigationKeys';
 import typography from '../../themes/typography';
+import images from '../../assets/images';
+import { API_BASE_URL } from '../../common/constants'; // Make sure to import your API base URL
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const CustomHeader = ({ title, navigation, searchQuery, onSearchChange, colors }) => {
+  const [profilePath, setProfilePath] = useState(null);
+
+  useEffect(() => {
+    const retrieveUserId = async () => {
+      try {
+        const storedUserId = await AsyncStorage.getItem('userId');
+        if (storedUserId !== null) {
+          const userIdInt = parseInt(storedUserId, 10);
+          fetchUserById(userIdInt);
+          console.log('Retrieved userId:', userIdInt);
+        }
+      } catch (error) {
+        console.error('Error retrieving userId from AsyncStorage:', error);
+      }
+    };
+
+    retrieveUserId();
+  }, []);
+
+  const fetchUserById = async (id) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/User/${id}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch user data: ${response.statusText}`);
+      }
+
+      const userData = await response.json();
+      setProfilePath(userData.profilePath); // Assuming profilePath is the key in the userData object
+    } catch (error) {
+      console.error('Error fetching user data:', error.message);
+    }
+  };
+
   const navigateToProfile = () => {
     navigation.navigate(StackNav.ProfileTab);
   };
@@ -25,7 +60,7 @@ const CustomHeader = ({ title, navigation, searchQuery, onSearchChange, colors }
         />
         <TouchableOpacity onPress={navigateToProfile} style={styles.profileContainer}>
           <Image
-            source={images.userImage1}
+            source={profilePath ? { uri: profilePath } : images.userImage1}
             style={styles.profileImage}
           />
         </TouchableOpacity>
