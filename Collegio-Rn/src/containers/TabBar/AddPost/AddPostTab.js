@@ -311,6 +311,8 @@ const localStyles = StyleSheet.create({
     ...styles.pv5,
     ...styles.ph10,
     borderRadius: moderateScale(24),
+
+
   },
   mainContainer: {
     ...styles.ph20,

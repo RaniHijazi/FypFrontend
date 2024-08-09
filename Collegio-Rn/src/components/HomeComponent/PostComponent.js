@@ -5,12 +5,14 @@ import {
   TouchableOpacity,
   View,
   ActivityIndicator,
+  Modal,
 } from 'react-native';
 import React, { useCallback, useRef, useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
+import ImageViewer from 'react-native-image-zoom-viewer';
 
 import { styles } from '../../themes';
 import { moderateScale, screenWidth, API_BASE_URL } from '../../common/constants';
@@ -18,7 +20,7 @@ import CText from '../common/CText';
 import { Comment, Like, Share, GoldBadge, BlueBadge, GreenBadge, PinkBadge, RedBadge } from '../../assets/svgs';
 import { StackNav } from '../../navigation/NavigationKeys';
 
-export default function PostComponent({ item, onPress, userId, updatePostLikes }) {
+export default function PostComponent({ item, onPress, userId, updatePostLikes, onImagePress }) {
   const navigation = useNavigation();
   const [isSaved, setIsSaved] = useState(false);
   const [liked, setLiked] = useState(false);
@@ -213,7 +215,7 @@ export default function PostComponent({ item, onPress, userId, updatePostLikes }
         </CText>
       ) : null}
       {item.imageUrl && (
-        <View>
+        <TouchableOpacity onPress={() => onImagePress(item.imageUrl)}>
           <Image
             source={{ uri: item.imageUrl }}
             style={localStyles.postMainImgStyle}
@@ -229,7 +231,7 @@ export default function PostComponent({ item, onPress, userId, updatePostLikes }
               ]}
             />
           </View>
-        </View>
+        </TouchableOpacity>
       )}
       <View style={styles.rowSpaceBetween}>
         <View style={localStyles.contentStyle}>
