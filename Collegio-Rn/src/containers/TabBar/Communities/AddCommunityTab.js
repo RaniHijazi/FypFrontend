@@ -90,15 +90,16 @@ export default function AddCommunityTab({ navigation }) {
 
     const formData = new FormData();
     if (image) {
-      formData.append('Image', {
+      formData.append('image', {
         uri: image.path,
         type: image.mime,
         name: 'photo.jpg',
       });
     }
     formData.append('preId', communityId);
+    formData.append('userId', userId);
     formData.append('name', communityName);
-    formData.append('Description', post);
+    formData.append('description', post);
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/Community/CreateSubCommunity`, {
@@ -116,7 +117,6 @@ export default function AddCommunityTab({ navigation }) {
         setSuccessModalVisible(true); // Show the success modal
         setImage(null);
         setImagePreviewVisible(false);
-
       } else {
         try {
           const errorData = JSON.parse(responseText);
@@ -131,6 +131,7 @@ export default function AddCommunityTab({ navigation }) {
       setLoading(false);
     }
   };
+
 
   const onSubmit = () => {
     onSubmitPost();
@@ -264,8 +265,6 @@ const localStyles = StyleSheet.create({
     ...styles.shadow,  // Add shadow for iOS and elevation for Android
   },
   publishContainer: {
-//    paddingVertical: moderateScale(10), // Increased vertical padding
-//    paddingHorizontal: moderateScale(20), // Increased horizontal padding
     borderRadius: moderateScale(14),
     width :60,
     padding:5
@@ -338,7 +337,7 @@ const localStyles = StyleSheet.create({
     zIndex: 1000,
   },
 
-  // Success Modal Styles
+
   successModalContainer: {
     backgroundColor: 'white',
     padding: moderateScale(20),
@@ -367,7 +366,7 @@ const localStyles = StyleSheet.create({
     fontSize: moderateScale(16),
   },
 
-  // Full Screen Image Modal Styles
+
   fullScreenModalContainer: {
     backgroundColor: 'black', // Optional, use black for full-screen image view
     width: '100%',

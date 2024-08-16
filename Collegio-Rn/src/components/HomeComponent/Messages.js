@@ -67,6 +67,7 @@ export default function Messages({ navigation }) {
         setChats(chatsData);
         setRooms(roomsData);
         setChatsFetched(true);
+        console.log('fetched');
       }
     } catch (error) {
       console.error('Error fetching chats with messages:', error);
@@ -75,7 +76,7 @@ export default function Messages({ navigation }) {
 
   const fetchUserMessages = async (userId) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/Message/${userId}`);
+      const response = await fetch(`http://192.168.1.182:7210/api/Message/${userId}`);
       if (!response.ok) {
         throw new Error('Failed to fetch messages');
       }
@@ -101,7 +102,7 @@ export default function Messages({ navigation }) {
     const profiles = {};
     for (const id of userIds) {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/User/${id}/profile`);
+        const response = await fetch(`http://192.168.1.182:7210/api/User/${id}/profile`);
         if (!response.ok) {
           throw new Error('Failed to fetch user profile');
         }
@@ -119,7 +120,8 @@ export default function Messages({ navigation }) {
       const storedUserId = await AsyncStorage.getItem('userId');
       if (storedUserId !== null) {
         const userIdInt = parseInt(storedUserId, 10);
-        const response = await fetch(`${API_BASE_URL}/api/ChatRoom/user/${userIdInt}`);
+        const response = await fetch(`http://192.168.1.182:7210/api/ChatRoom/user/${userIdInt}`);
+        console.log('Response Status:', response.status);
         if (!response.ok) {
           throw new Error('Failed to fetch chat rooms');
         }

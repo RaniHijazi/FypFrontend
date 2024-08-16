@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import { FlatList, StyleSheet, TouchableOpacity, View, Image } from 'react-native';
+import { FlatList, StyleSheet, TouchableOpacity, View, Image, LogBox } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -16,6 +16,7 @@ import { StackNav, TabNav } from '../../../navigation/NavigationKeys';
 import PopularCategory from '../../../components/HomeComponent/PopularCategory';
 import PostComponent from '../../../components/HomeComponent/PostComponent'; // Adjust the import path as needed
 
+LogBox.ignoreLogs(['VirtualizedLists should never be nested inside plain ScrollViews with the same orientation']);
 export default function SearchTab({ navigation }) {
   const colors = useSelector(state => state.theme.theme);
   const [search, setSearch] = useState('');
@@ -108,7 +109,7 @@ export default function SearchTab({ navigation }) {
 
   const handleSearchProfiles = async () => {
     try {
-      const response = await fetch(`http://192.168.5.1:7210/api/User/all`);
+      const response = await fetch(`${API_BASE_URL}/api/User/all`);
       if (!response.ok) {
         throw new Error(`Failed to fetch user data: ${response.statusText}`);
       }
@@ -128,14 +129,15 @@ export default function SearchTab({ navigation }) {
       return;
     }
     try {
-      const response = await fetch(`http://192.168.5.1:7210/api/Post/PrePosts?PreCommunityId=${communityId}`);
+      const response = await fetch(`${API_BASE_URL}/api/Post/PrePosts?PreCommunityId=${communityId}`);
       if (!response.ok) {
         throw new Error(`Failed to fetch posts: ${response.statusText}`);
       }
       const data = await response.json();
       const filteredData = data.filter(post =>
-        post.userFullName.toLowerCase().includes(search.toLowerCase())
-      );
+            (post.userFullName && post.userFullName.toLowerCase().includes(search.toLowerCase())) ||
+            (post.description && post.description.toLowerCase().includes(search.toLowerCase())) // Filter by description with null check
+          );
       setPostResults(filteredData);
     } catch (error) {
       console.error('Error fetching post data:', error);
@@ -209,6 +211,7 @@ export default function SearchTab({ navigation }) {
           renderItem={renderUserItem}
           keyExtractor={(item, index) => index.toString()}
           contentContainerStyle={localStyles.contentContainerStyle}
+          nestedScrollEnabled // Enable nested scrolling
         />
       );
     }
@@ -229,6 +232,7 @@ export default function SearchTab({ navigation }) {
           renderItem={renderPostComponent}
           keyExtractor={(item, index) => index.toString()}
           contentContainerStyle={localStyles.contentContainerStyle}
+          nestedScrollEnabled // Enable nested scrolling
         />
       );
     }
@@ -251,6 +255,7 @@ export default function SearchTab({ navigation }) {
               renderItem={renderUserItem}
               keyExtractor={(item, index) => index.toString()}
               contentContainerStyle={localStyles.contentContainerStyle}
+              nestedScrollEnabled // Enable nested scrolling
             />
           )}
           <CText type={'b16'} color={colors.dark ? colors.white : colors.black} style={styles.mb10}>
@@ -268,6 +273,7 @@ export default function SearchTab({ navigation }) {
               renderItem={renderPostComponent}
               keyExtractor={(item, index) => index.toString()}
               contentContainerStyle={localStyles.contentContainerStyle}
+              nestedScrollEnabled // Enable nested scrolling
             />
           )}
         </View>

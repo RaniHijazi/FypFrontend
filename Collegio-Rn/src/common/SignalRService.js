@@ -1,6 +1,12 @@
 import { HubConnectionBuilder, LogLevel, HttpTransportType } from '@microsoft/signalr';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import { FlatList, StyleSheet, TouchableOpacity, View, Image, LogBox } from 'react-native';
+LogBox.ignoreLogs([
+  'VirtualizedLists should never be nested inside plain ScrollViews with the same orientation',
+  'Failed to complete negotiation with the server: TypeError: Network request failed',
+  'Failed to start the connection: Error: Failed to complete negotiation with the server: TypeError: Network request failed',
+  'Warning: Error from HTTP request. TypeError: Network request failed'
+]);
 class SignalRService {
   constructor() {
     this.connection = null;
@@ -16,7 +22,7 @@ class SignalRService {
     }
 
     this.connection = new HubConnectionBuilder()
-      .withUrl(`http://192.168.0.102:7210/chatHub?userId=${userId}`, {
+      .withUrl(`http://192.168.1.182:7210/chatHub?userId=${userId}`, {
         transport: HttpTransportType.WebSockets,
       })
       .configureLogging(LogLevel.Information)
@@ -30,6 +36,7 @@ class SignalRService {
       this.registerMessageHandler(messageHandler); // Register message handler after connection starts
     } catch (err) {
       console.log('SignalRService: SignalR Connection Error:', err);
+      ogBox.ignoreLogs([`SignalRService: SignalR Connection Error: ${err.message}`]);
       setTimeout(() => this.start(messageHandler, notificationHandler), 5000); // Retry connection after 5 seconds
     }
 

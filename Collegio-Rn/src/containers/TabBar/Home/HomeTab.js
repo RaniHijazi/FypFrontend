@@ -17,7 +17,6 @@ import { useIsFocused } from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
 import ImageViewer from 'react-native-image-zoom-viewer';
 
-// Custom imports
 import { TabNav, StackNav } from '../../../navigation/NavigationKeys.js';
 import CSafeAreaView from '../../../components/common/CSafeAreaView';
 import CText from '../../../components/common/CText';
@@ -264,6 +263,10 @@ export default function HomeTab({ navigation, route }) {
       setIsImageModalVisible(true);
     };
 
+    const handleDeletePost = () => {
+      handleRefresh();  // This will refresh the HomeTab content
+    };
+
     return (
       <PostComponent
         item={item}
@@ -271,6 +274,7 @@ export default function HomeTab({ navigation, route }) {
         userId={userId}
         updatePostLikes={updatePostLikes}
         onImagePress={onImagePress}
+        onDelete={handleDeletePost} // Pass the handleDeletePost function as the onDelete prop
       />
     );
   };

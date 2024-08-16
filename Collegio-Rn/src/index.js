@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import AppNavigator from './navigation';
 import { styles } from './themes';
 import signalRService from './common/SignalRService';
-import Notification from './components/Notification'; // Ensure correct path
+import Notification from './components/Notification';
 
 const App = () => {
   const colors = useSelector(state => state.theme.theme);
