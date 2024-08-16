@@ -5,16 +5,13 @@ import { Provider } from 'react-redux';
 import App from './src';
 import { name as appName } from './app.json';
 import store from './src/redux/store';
-import messaging from '@react-native-firebase/messaging';
 
 const RNRoot = () => {
   return (
     <Provider store={store}>
       <App />
     </Provider>
-
   );
 };
-
 
 AppRegistry.registerComponent(appName, () => RNRoot);

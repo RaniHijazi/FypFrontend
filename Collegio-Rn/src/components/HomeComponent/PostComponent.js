@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react';
 import {
   FlatList,
   Image,
@@ -5,8 +6,9 @@ import {
   TouchableOpacity,
   View,
   ActivityIndicator,
+  Modal,
+  Text,
 } from 'react-native';
-import React, { useCallback, useRef, useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
@@ -18,11 +20,12 @@ import CText from '../common/CText';
 import { Comment, Like, Share, GoldBadge, BlueBadge, GreenBadge, PinkBadge, RedBadge } from '../../assets/svgs';
 import { StackNav } from '../../navigation/NavigationKeys';
 
-export default function PostComponent({ item, onPress, userId, updatePostLikes }) {
+export default function PostComponent({ item, onPress, userId, updatePostLikes, onImagePress, onDelete }) {
   const navigation = useNavigation();
   const [isSaved, setIsSaved] = useState(false);
   const [liked, setLiked] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showDeleteModal, setShowDeleteModal] = useState(false); // New state for modal visibility
 
   const colors = useSelector(state => state.theme.theme);
 
@@ -77,6 +80,26 @@ export default function PostComponent({ item, onPress, userId, updatePostLikes }
     }
   };
 
+  const deletePost = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/Post/DeletePost?post_id=${item.id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        throw new Error('Failed to delete post');
+      }
+      console.log('Post deleted successfully');
+      setShowDeleteModal(false);
+
+      // Call the onDelete callback to refresh the list or page
+      if (onDelete) {
+        onDelete();
+      }
+    } catch (error) {
+      console.error('Error deleting post:', error);
+    }
+  };
+
   useEffect(() => {
     checkIfLiked();
   }, []);
@@ -99,6 +122,10 @@ export default function PostComponent({ item, onPress, userId, updatePostLikes }
 
   const onPressViewPost = () => {
     navigation.navigate(StackNav.ViewPost, { item, userId });
+  };
+
+  const onPressDelete = () => {
+    setShowDeleteModal(true); // Show the delete modal
   };
 
   const RenderComment = ({ icon, text, onPress }) => {
@@ -194,13 +221,15 @@ export default function PostComponent({ item, onPress, userId, updatePostLikes }
             </CText>
           </View>
         </TouchableOpacity>
-        <TouchableOpacity onPress={onPressViewPost}>
-          <MaterialCommunityIcons
-            name={'dots-vertical'}
-            size={moderateScale(30)}
-            color={colors.dark ? colors.primary : colors.black}
-          />
-        </TouchableOpacity>
+        {item.userId === userId && (
+          <TouchableOpacity onPress={onPressDelete}>
+            <MaterialCommunityIcons
+              name={'dots-vertical'}
+              size={moderateScale(30)}
+              color={colors.dark ? colors.primary : colors.black}
+            />
+          </TouchableOpacity>
+        )}
       </View>
       {item.description ? (
         <CText
@@ -213,7 +242,7 @@ export default function PostComponent({ item, onPress, userId, updatePostLikes }
         </CText>
       ) : null}
       {item.imageUrl && (
-        <View>
+        <TouchableOpacity onPress={() => onImagePress(item.imageUrl)}>
           <Image
             source={{ uri: item.imageUrl }}
             style={localStyles.postMainImgStyle}
@@ -229,7 +258,7 @@ export default function PostComponent({ item, onPress, userId, updatePostLikes }
               ]}
             />
           </View>
-        </View>
+        </TouchableOpacity>
       )}
       <View style={styles.rowSpaceBetween}>
         <View style={localStyles.contentStyle}>
@@ -249,6 +278,39 @@ export default function PostComponent({ item, onPress, userId, updatePostLikes }
           />
         </TouchableOpacity>
       </View>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        visible={showDeleteModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowDeleteModal(false)}
+      >
+        <View style={localStyles.modalContainer}>
+          <View style={localStyles.modalContent}>
+            <Text style={localStyles.modalText}>Are you sure you want to delete this post?</Text>
+            <View style={localStyles.modalActions}>
+              <TouchableOpacity
+                style={localStyles.deleteButton}
+                onPress={deletePost}
+              >
+                <MaterialCommunityIcons
+                  name="trash-can-outline"
+                  size={moderateScale(24)}
+                  color="white"
+                />
+                <Text style={localStyles.deleteButtonText}>Delete</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={localStyles.cancelButton}
+                onPress={() => setShowDeleteModal(false)}
+              >
+                <Text style={localStyles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -301,6 +363,51 @@ const localStyles = StyleSheet.create({
     ...styles.mt10,
   },
   badge: {
+    marginLeft: moderateScale(5),
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    padding: moderateScale(20),
+    borderTopLeftRadius: moderateScale(20),
+    borderTopRightRadius: moderateScale(20),
+    alignItems: 'center',
+  },
+  modalText: {
+    fontSize: moderateScale(16),
+    fontWeight: 'bold',
+    marginBottom: moderateScale(20),
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  deleteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'red',
+    padding: moderateScale(10),
+    borderRadius: moderateScale(5),
+  },
+  deleteButtonText: {
+    color: 'white',
+    marginLeft: moderateScale(5),
+  },
+  cancelButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: moderateScale(10),
+    borderRadius: moderateScale(5),
+    borderWidth: 1,
+    borderColor: 'gray',
+  },
+  cancelButtonText: {
+    color: 'gray',
     marginLeft: moderateScale(5),
   },
 });

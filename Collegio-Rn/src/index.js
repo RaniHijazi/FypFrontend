@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StatusBar, View } from 'react-native';
+import { StatusBar, View, Button } from 'react-native';
 import { useSelector } from 'react-redux';
 import AppNavigator from './navigation';
 import { styles } from './themes';
@@ -75,8 +75,6 @@ const sendFcmTokenToServer = async (userId, fcmToken) => {
 const App = () => {
   const colors = useSelector(state => state.theme.theme);
   const [notification, setNotification] = useState(null);
-  const [FcmToken, setFcmToken] = useState(null);
-  const [isFirebaseInitialized, setIsFirebaseInitialized] = useState(false);
 
   useEffect(() => {
     console.log("FCM Token:", FcmToken);

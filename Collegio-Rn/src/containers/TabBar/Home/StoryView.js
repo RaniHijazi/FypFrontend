@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Text,
+  Alert
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Octicons from 'react-native-vector-icons/Octicons';
@@ -17,6 +18,7 @@ import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
 import LinearGradient from 'react-native-linear-gradient';
 import Video from 'react-native-video';
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 //custom imports
 import { useSelector } from 'react-redux';
@@ -42,7 +44,24 @@ function StoryView({ route }) {
   const [current, setCurrent] = useState(0);
   const [load, setLoad] = useState(false);
   const [story, setStory] = useState('');
+  const [myId, setMyId] = useState(null);
   const progress = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        const retrieveUserId = async () => {
+          try {
+            const storedUserId = await AsyncStorage.getItem('userId');
+            if (storedUserId !== null) {
+              const userIdInt = parseInt(storedUserId, 10);
+              setMyId(userIdInt); // Store the user ID in the state variable
+            }
+          } catch (error) {
+            console.error('Error retrieving userId from AsyncStorage:', error);
+          }
+        };
+
+        retrieveUserId();
+      }, []);
 
   useEffect(() => {
     console.log('Current User Stories:', content);
@@ -175,6 +194,42 @@ function StoryView({ route }) {
     );
   };
 
+ const deleteStory = async () => {
+   const storyId = content[current]?.id; // Assuming each story has an 'id' property
+   try {
+     const response = await fetch(`http://192.168.1.182:7210/api/Post/${storyId}`, {
+       method: 'DELETE',
+     });
+     if (response.ok) {
+       Alert.alert('Story deleted successfully');
+       // Remove the deleted story from the content
+       const updatedContent = content.filter((_, index) => index !== current);
+       setContent(updatedContent);
+       if (updatedContent.length === 0) {
+         onNextUser();
+       } else if (current >= updatedContent.length) {
+         setCurrent(updatedContent.length - 1);
+       }
+     } else {
+       console.log('Failed to delete story:', response.status, response.statusText);
+       Alert.alert('Failed to delete the story');
+     }
+   } catch (error) {
+     console.error('Error deleting story:', error);
+     Alert.alert('An error occurred while deleting the story');
+   }
+ };
+  const confirmDeleteStory = () => {
+    Alert.alert(
+      'Delete Story',
+      'Are you sure you want to delete this story?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', onPress: deleteStory },
+      ]
+    );
+  };
+
   return (
     <SafeAreaView style={localStyles.containerModal}>
       <StatusBar backgroundColor="black" barStyle="light-content" />
@@ -240,11 +295,16 @@ function StoryView({ route }) {
                 {users[currentUserIndex]?.userFullName}
               </CText>
             </View>
-            <TouchableOpacity onPress={onCloseStory}>
-              <View style={localStyles.closeContainer}>
+            <View style={localStyles.iconContainer}>
+              {content[current]?.userId === myId && (
+                <TouchableOpacity onPress={confirmDeleteStory}>
+                  <Ionicons name="trash" size={18} color="white" />
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity onPress={onCloseStory}>
                 <Ionicons name="close" size={28} color="white" />
-              </View>
-            </TouchableOpacity>
+              </TouchableOpacity>
+            </View>
           </View>
           <View style={localStyles.nextPreviousContainer}>
             <TouchableWithoutFeedback onPress={onPressPrevious}>
@@ -344,5 +404,9 @@ const localStyles = StyleSheet.create({
   mainContentStyle: {
     ...styles.rowCenter,
     gap: moderateScale(5),
+  },
+  iconContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });
