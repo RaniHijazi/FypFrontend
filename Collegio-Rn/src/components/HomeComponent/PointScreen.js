@@ -5,24 +5,22 @@ import ProgressSemiCircle from './ProgressSemiCircle';
 import CText from '../common/CText';
 import CHeader from '../common/CHeader';
 import LevelTable from '../common/LevelTable';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
 
 const getLevelIconName = (level) => {
   switch (level) {
     case 1:
-      return 'school';
+      return 'school'; // Represents entry-level student
     case 2:
-      return 'event';
+      return 'event'; // Represents starting to participate in university events
     case 3:
-      return 'work';
+      return 'work'; // Represents participating in university workshops
     case 4:
-      return 'certificate';
+      return 'certificate'; // Represents actively participating in group projects
     case 5:
-      return 'leaderboard';
+      return 'leaderboard'; // Represents taking on leadership roles
 
     default:
-      return 'school';
+      return 'school'; // Default icon for undefined levels
   }
 };
 
@@ -42,34 +40,17 @@ const PointScreen = () => {
   const [dailyComments, setDailyComments] = useState(0);
   const [level, setLevel] = useState(0); // Initial level set to 0
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [userId, setUserId] = useState(null);
-
-   useEffect(() => {
-      const retrieveUserId = async () => {
-        try {
-          const storedUserId = await AsyncStorage.getItem('userId');
-          if (storedUserId !== null) {
-            const userIdInt = parseInt(storedUserId, 10);
-            setUserId(userIdInt);
-          }
-        } catch (error) {
-          console.error('Error retrieving userId from AsyncStorage:', error);
-        }
-      };
-
-      retrieveUserId();
-    }, []);
+  const userId = 1; // Replace with the actual user ID you want to fetch points for
 
   useEffect(() => {
     const fetchPoints = async () => {
       try {
-        const response = await fetch(`http://192.168.1.182:7210/api/User/${userId}/points`);
-        if (response.ok) {
-          const points = await response.json();
-
-
-        setProgress(points);
+        const response = await fetch(`http://172.20.10.3:7210/api/User/${userId}/points`);
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
         }
+        const points = await response.json();
+        setProgress(points);
       } catch (error) {
         console.error('Error fetching user points:', error);
       }
@@ -77,13 +58,12 @@ const PointScreen = () => {
 
     const fetchDailyLikes = async () => {
       try {
-        const response = await fetch(`http://192.168.1.182:7210/api/User/${userId}/daily-likes`);
-        if (response.ok) {
-          const likes = await response.json();
-
-
-        setDailyLikes(likes);
+        const response = await fetch(`http://172.20.10.3:7210/api/User/${userId}/daily-likes`);
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
         }
+        const likes = await response.json();
+        setDailyLikes(likes);
       } catch (error) {
         console.error('Error fetching daily likes:', error);
       }
@@ -91,13 +71,12 @@ const PointScreen = () => {
 
     const fetchDailyPosts = async () => {
       try {
-        const response = await fetch(`http://192.168.1.182:7210/api/User/${userId}/daily-posts`);
-        if (response.ok) {
-
-
+        const response = await fetch(`http://172.20.10.3:7210/api/User/${userId}/daily-posts`);
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
         const posts = await response.json();
         setDailyPosts(posts);
-        }
       } catch (error) {
         console.error('Error fetching daily posts:', error);
       }
@@ -105,13 +84,12 @@ const PointScreen = () => {
 
     const fetchDailyComments = async () => {
       try {
-        const response = await fetch(`http://192.168.1.182:7210/api/User/${userId}/daily-comments`);
-        if (response.ok) {
-
-
+        const response = await fetch(`http://172.20.10.3:7210/api/User/${userId}/daily-comments`);
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
         const comments = await response.json();
         setDailyComments(comments);
-        }
       } catch (error) {
         console.error('Error fetching daily comments:', error);
       }
@@ -119,13 +97,12 @@ const PointScreen = () => {
 
     const fetchLevel = async () => {
       try {
-        const response = await fetch(`http://192.168.1.182:7210/api/User/${userId}/level`);
-        if (response.ok) {
-
-
+        const response = await fetch(`http://172.20.10.3:7210/api/User/${userId}/level`);
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
         const level = await response.json();
         setLevel(level);
-        }
       } catch (error) {
         console.error('Error fetching user level:', error);
       }
@@ -135,7 +112,7 @@ const PointScreen = () => {
     fetchDailyLikes();
     fetchDailyPosts();
     fetchDailyComments();
-    fetchLevel(); 
+    fetchLevel(); // Fetch the user level
   }, [userId]);
 
   const openModal = () => {

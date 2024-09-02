@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   Platform,
   ActivityIndicator,
-  Modal,
 } from 'react-native';
 import { useSelector } from 'react-redux';
 import Octicons from 'react-native-vector-icons/Octicons';
@@ -18,7 +17,6 @@ import CSafeAreaView from '../../../components/common/CSafeAreaView';
 import { moderateScale, API_BASE_URL } from '../../../common/constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import PostComponent from '../../../components/HomeComponent/PostComponent';
-import AddCommunityTab from './AddCommunityTab'; // Import AddCommunityTab component
 
 export default function CommunitiesTab({ navigation }) {
   const colors = useSelector(state => state.theme.theme) || {};
@@ -30,7 +28,6 @@ export default function CommunitiesTab({ navigation }) {
   const [communityId, setCommunityId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState(null);
-  const [showAddCommunityModal, setShowAddCommunityModal] = useState(false); // State for modal visibility
 
   useEffect(() => {
     const retrieveUserId = async () => {
@@ -166,7 +163,7 @@ export default function CommunitiesTab({ navigation }) {
     : exploreCommunities.filter(community => community.name.toLowerCase().includes(search.toLowerCase()));
 
   const navigateToAddPost = () => {
-    setShowAddCommunityModal(true); // Show the modal
+    navigation.navigate(StackNav.AddCommunityTab);
   };
 
   // Callback function to refetch communities
@@ -222,17 +219,6 @@ export default function CommunitiesTab({ navigation }) {
         onPress={navigateToAddPost}>
         <Octicons name={'plus'} size={moderateScale(20)} color={colors.white} />
       </TouchableOpacity>
-
-      <Modal
-        visible={showAddCommunityModal}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowAddCommunityModal(false)}
-      >
-        <View style={localStyles.modalContainer}>
-          <AddCommunityTab navigation={navigation} />
-        </View>
-      </Modal>
     </CSafeAreaView>
   );
 }
@@ -314,11 +300,5 @@ const localStyles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
     zIndex: 1,
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent background
   },
 });

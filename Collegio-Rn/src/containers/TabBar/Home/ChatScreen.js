@@ -32,7 +32,6 @@ export default function ChatScreen({ route }) {
   const [messages, setMessages] = useState([]);
   const [userId, setUserId] = useState(null);
   const [senderProfile, setSenderProfile] = useState(null);
-  const [messageQueue, setMessageQueue] = useState([]);
   const flatListRef = useRef(null);
 
   useEffect(() => {
@@ -58,10 +57,6 @@ export default function ChatScreen({ route }) {
     if (userId !== null && senderProfile !== null) {
       fetchAllMessages();
       signalRService.start(handleReceiveMessage);
-
-      signalRService.connection.onreconnected(() => {
-        processMessageQueue();
-      });
     }
 
     return () => {
@@ -110,17 +105,18 @@ export default function ChatScreen({ route }) {
     }
   };
 
-  const handleReceiveMessage = (message) => {
-    console.log('Received message:', message);
-    if (message.senderId !== userId) {
-      setMessages((prevMessages) => {
-        const newMessages = [...prevMessages, message].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-        console.log('Updated Messages:', newMessages);
-        return newMessages;
-      });
-      flatListRef.current?.scrollToEnd({ animated: true });
-    }
-  };
+ const handleReceiveMessage = (message) => {
+   console.log('Received message:', message);
+   if (message.senderId !== userId) {
+     setMessages((prevMessages) => {
+       const newMessages = [...prevMessages, message].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+       console.log('Updated Messages:', newMessages);
+       return newMessages;
+     });
+     flatListRef.current?.scrollToEnd({ animated: true });
+   }
+ };
+
 
   const sendMessage = async () => {
     if (chat.trim() === '') {
@@ -141,38 +137,19 @@ export default function ChatScreen({ route }) {
 
     console.log('Sending message:', newMessage);
 
+    // Optimistically update the UI
     setMessages((prevMessages) => [...prevMessages, newMessage]);
     flatListRef.current?.scrollToEnd({ animated: true });
 
-    if (signalRService.connection.state === 'Connected') {
-      try {
-        await signalRService.sendMessage(data.id, chat);
-        setChat('');
-      } catch (error) {
-        console.error('Error sending message:', error.message);
-        enqueueMessage(newMessage);
-      }
-    } else {
-      enqueueMessage(newMessage);
+    try {
+      await signalRService.sendMessage(data.id, chat);
+      setChat('');
+    } catch (error) {
+      console.error('Error sending message:', error.message);
     }
   };
 
-  const enqueueMessage = (message) => {
-    setMessageQueue((prevQueue) => [...prevQueue, message]);
-  };
-
-  const processMessageQueue = async () => {
-    for (const message of messageQueue) {
-      try {
-        await signalRService.sendMessage(data.id, message.content);
-      } catch (error) {
-        console.error('Error sending queued message:', error.message);
-      }
-    }
-    setMessageQueue([]);
-  };
-
-  const onChangeTextChat = (text) => {
+  const onChangeTextChat = text => {
     setChat(text);
   };
 

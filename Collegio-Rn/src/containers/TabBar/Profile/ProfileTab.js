@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet, FlatList,LogBox } from 'react-native';
+import { View, Text, ActivityIndicator, StyleSheet, FlatList } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Custom imports
@@ -9,13 +9,7 @@ import { moderateScale, API_BASE_URL  } from '../../../common/constants';
 import PostComponent from '../../../components/HomeComponent/PostComponent';
 import ProfileComponent from '../../../components/ProfileComponent/ProfileComponent';
 import { styles, colors } from '../../../themes';
-LogBox.ignoreLogs([
-  'VirtualizedLists should never be nested inside plain ScrollViews with the same orientation',
-  'Failed to complete negotiation with the server: TypeError: Network request failed',
-  'Failed to start the connection: Error: Failed to complete negotiation with the server: TypeError: Network request failed',
-  'Warning: Error from HTTP request. TypeError: Network request failed',
-  'No data received from the server' // Ignoring this specific warning
-]);
+
 export default function ProfileTab() {
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState(null);
@@ -40,31 +34,22 @@ export default function ProfileTab() {
     retrieveUserId();
   }, []);
 
- const fetchProfilePosts = async (userId) => {
-   setLoading(true);
-   try {
-     const response = await fetch(`http://192.168.1.182:7210/api/Post/user/${userId}`);
-     if (response.ok) {
-       const text = await response.text();
-       if (text) {
-         const data = JSON.parse(text);
-         setPosts(data);
-       } else {
-         console.warn('No data received from the server');
-         setPosts([]);
-       }
-     } else {
-       console.error('Failed to fetch posts:', response.status);
-       setPosts([]); // Ensure posts are reset in case of an error
-     }
-   } catch (error) {
-     console.error('Error fetching posts:', error);
-   } finally {
-     setLoading(false);
-     setIsRefreshing(false);
-   }
- };
-
+  const fetchProfilePosts = async (userId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/Post/user/${userId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch posts');
+      }
+      const data = await response.json();
+      setPosts(data);
+      setLoading(false);
+      setIsRefreshing(false);
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+      setLoading(false);
+      setIsRefreshing(false);
+    }
+  };
 
   const handleRefresh = () => {
     setIsRefreshing(true);
@@ -79,32 +64,15 @@ export default function ProfileTab() {
     </View>
   );
 
-  const updatePostLikes = async (postId, newLikeCount) => {
-    try {
-      // Assuming there's an API to update likes on the server
-      const response = await fetch(`${API_BASE_URL}/api/Post/updateLikes`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ postId, newLikeCount }),
-      });
-
-      if (response.ok) {
-        setPosts(prevPosts =>
-          prevPosts.map(post => {
-            if (post.id === postId) {
-              return { ...post, likesCount: newLikeCount };
-            }
-            return post;
-          })
-        );
-      } else {
-        console.error('Failed to update likes:', response.status);
-      }
-    } catch (error) {
-      console.error('Error updating likes:', error);
-    }
+  const updatePostLikes = (postId, newLikeCount) => {
+    setPosts(prevPosts =>
+      prevPosts.map(post => {
+        if (post.id === postId) {
+          return { ...post, likesCount: newLikeCount };
+        }
+        return post;
+      })
+    );
   };
 
   const ListHeaderComponent = () => (
