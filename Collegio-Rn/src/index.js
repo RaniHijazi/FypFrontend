@@ -48,7 +48,7 @@ const getUserId = async () => {
 
 const sendFcmTokenToServer = async (userId, fcmToken) => {
   try {
-    const response = await fetch('http://172.20.10.3:7210/api/User/updateFcmToken', {
+    const response = await fetch('http://192.168.1.141:7210/api/User/updateFcmToken', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

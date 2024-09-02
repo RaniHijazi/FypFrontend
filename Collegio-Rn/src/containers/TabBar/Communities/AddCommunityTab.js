@@ -1,5 +1,5 @@
-import { Image, StyleSheet, TouchableOpacity, View, Alert, ActivityIndicator, Modal, Text, TextInput } from 'react-native';
 import React, { useState, useEffect } from 'react';
+import { Image, StyleSheet, TouchableOpacity, View, Alert, ActivityIndicator, Modal, Text } from 'react-native';
 import { useSelector } from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute } from '@react-navigation/native';
@@ -14,6 +14,7 @@ import { moderateScale, API_BASE_URL } from '../../../common/constants';
 import CKeyBoardAvoidWrapper from '../../../components/common/CKeyBoardAvoidWrapper';
 import images from '../../../assets/images';
 import AddPost from '../../TabBar/AddPost/AddPost';
+import CInput from '../../../components/common/CInput';  // Import CInput
 
 export default function AddCommunityTab({ navigation }) {
   const colors = useSelector(state => state.theme.theme);
@@ -89,15 +90,16 @@ export default function AddCommunityTab({ navigation }) {
 
     const formData = new FormData();
     if (image) {
-      formData.append('Image', {
+      formData.append('image', {
         uri: image.path,
         type: image.mime,
         name: 'photo.jpg',
       });
     }
     formData.append('preId', communityId);
+    formData.append('userId', userId);
     formData.append('name', communityName);
-    formData.append('Description', post);
+    formData.append('description', post);
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/Community/CreateSubCommunity`, {
@@ -115,7 +117,6 @@ export default function AddCommunityTab({ navigation }) {
         setSuccessModalVisible(true); // Show the success modal
         setImage(null);
         setImagePreviewVisible(false);
-
       } else {
         try {
           const errorData = JSON.parse(responseText);
@@ -130,6 +131,7 @@ export default function AddCommunityTab({ navigation }) {
       setLoading(false);
     }
   };
+
 
   const onSubmit = () => {
     onSubmitPost();
@@ -156,45 +158,42 @@ export default function AddCommunityTab({ navigation }) {
       <TouchableOpacity
         onPress={onSubmit}
         style={[
-          localStyles.publishContainer,
-          { backgroundColor: colors.dark ? colors.primary : colors.black },
+          localStyles.publishContainer
         ]}>
-        <CText type={'b14'} numberOfLines={1} color={colors.white}>
+        <Text style={{ color: colors.black, fontWeight: '400', fontSize: moderateScale(16) }}>
           {strings.publish}
-        </CText>
+        </Text>
       </TouchableOpacity>
     );
   };
 
+
   return (
     <CSafeAreaView>
-      <CKeyBoardAvoidWrapper contentContainerStyle={localStyles.mainContainer}>
-        <View>
+      <CKeyBoardAvoidWrapper contentContainerStyle={localStyles.wrapper}>
+        <View style={localStyles.container}>
           <CHeader
             isHideBack={true}
             isLeftIcon={<IsLeftIcon />}
             rightIcon={<RightIcon />}
             title={strings.create}
           />
-          <Text style={localStyles.title}>Create Sub Community</Text>
+          <CText style={localStyles.title} type={'b24'}>Create Sub Community</CText>
           <View style={localStyles.inputContainer}>
-            <View style={localStyles.labelContainer}>
-              <Text style={localStyles.label}>Community Name</Text>
-              <TextInput
-                style={localStyles.textInput}
-                value={communityName}
-                onChangeText={onChangeTextCommunityName}
-              />
-            </View>
-            <View style={localStyles.labelContainer}>
-              <Text style={localStyles.label}>Description</Text>
-              <TextInput
-                style={localStyles.largeTextInput}
-                value={post}
-                onChangeText={onChangeTextPost}
-                multiline={true}
-              />
-            </View>
+            <CInput
+              label="Community Name"
+              _value={communityName}
+              toGetTextFieldValue={onChangeTextCommunityName}
+              inputContainerStyle={localStyles.textInput}
+            />
+            <CInput
+              label="Description"
+              _value={post}
+              toGetTextFieldValue={onChangeTextPost}
+              inputContainerStyle={localStyles.largeTextInput}
+              multiline={true}
+
+            />
           </View>
           <View style={localStyles.addPostContainer}>
             <View style={localStyles.row}>
@@ -214,14 +213,14 @@ export default function AddCommunityTab({ navigation }) {
           onRequestClose={() => setSuccessModalVisible(false)}
         >
           <View style={localStyles.successModalContainer}>
-            <Text style={localStyles.successMessage}>
+            <CText style={localStyles.successMessage} type={'b18'}>
               The community has been created, wait for the admission to activate it
-            </Text>
+            </CText>
             <TouchableOpacity
               style={localStyles.nextButton}
               onPress={() => setSuccessModalVisible(false)}
             >
-              <Text style={localStyles.nextButtonText}>OK</Text>
+              <CText style={localStyles.nextButtonText} type={'b16'}>OK</CText>
             </TouchableOpacity>
           </View>
         </Modal>
@@ -242,7 +241,7 @@ export default function AddCommunityTab({ navigation }) {
               style={localStyles.fullScreenNextButton}
               onPress={() => setImagePreviewVisible(false)}
             >
-              <Text style={localStyles.fullScreenNextButtonText}>Next</Text>
+              <CText style={localStyles.fullScreenNextButtonText} type={'b16'}>Next</CText>
             </TouchableOpacity>
           </View>
         </Modal>
@@ -252,14 +251,27 @@ export default function AddCommunityTab({ navigation }) {
 }
 
 const localStyles = StyleSheet.create({
-  publishContainer: {
-    ...styles.pv5,
-    ...styles.ph10,
-    borderRadius: moderateScale(24),
+  wrapper: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
+  container: {
+    width: '90%',  // Adjust the width as needed
+    maxWidth: 500,  // Set a maximum width for larger screens
+    backgroundColor: 'white',  // Optional: add a background color
+    borderRadius: 10,  // Optional: add border radius
+    padding: moderateScale(20),
+    ...styles.shadow,  // Add shadow for iOS and elevation for Android
+  },
+  publishContainer: {
+    borderRadius: moderateScale(14),
+    width :60,
+    padding:5
+  },
+
   mainContainer: {
     ...styles.ph20,
-
     ...styles.flexGrow1,
     ...styles.justifyBetween,
   },
@@ -267,7 +279,7 @@ const localStyles = StyleSheet.create({
     marginBottom: moderateScale(20),
   },
   title: {
-    fontSize: moderateScale(24),
+    fontSize: moderateScale(23),
     fontWeight: 'bold',
     textAlign: 'center',
     marginVertical: moderateScale(10),
@@ -301,7 +313,9 @@ const localStyles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   addPostContainer: {
-    marginBottom: moderateScale(20),
+    marginBottom: moderateScale(15),
+
+    marginTop:moderateScale(5),
   },
   row: {
     flexDirection: 'row',
@@ -323,7 +337,7 @@ const localStyles = StyleSheet.create({
     zIndex: 1000,
   },
 
-  // Success Modal Styles
+
   successModalContainer: {
     backgroundColor: 'white',
     padding: moderateScale(20),
@@ -349,10 +363,10 @@ const localStyles = StyleSheet.create({
   },
   nextButtonText: {
     color: 'black',
-    fontSize: moderateScale(10),
+    fontSize: moderateScale(16),
   },
 
-  // Full Screen Image Modal Styles
+
   fullScreenModalContainer: {
     backgroundColor: 'black', // Optional, use black for full-screen image view
     width: '100%',

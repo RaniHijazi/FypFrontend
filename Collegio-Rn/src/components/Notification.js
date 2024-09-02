@@ -1,40 +1,65 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Animated, TouchableOpacity } from 'react-native';
 
 const Notification = ({ message, onDismiss }) => {
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      onDismiss();
-    }, 3000);
+  const slideAnim = useRef(new Animated.Value(-100)).current;
 
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [message, onDismiss]);
+  useEffect(() => {
+    Animated.timing(slideAnim, {
+      toValue: 0,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
+  }, [slideAnim]);
 
   return (
-    <View style={styles.notification}>
+    <Animated.View style={[styles.notification, { transform: [{ translateY: slideAnim }] }]}>
+      <Text style={styles.title}>Admission</Text>
       <Text style={styles.message}>{message}</Text>
-    </View>
+      <TouchableOpacity style={styles.button} onPress={onDismiss}>
+        <Text style={styles.buttonText}>Mark as Read</Text>
+      </TouchableOpacity>
+    </Animated.View>
   );
 };
 
 const styles = StyleSheet.create({
   notification: {
     position: 'absolute',
-    top: 50,
+    top: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'black',
-    padding: 15,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)', // Updated color with transparency
+    paddingVertical: 15,
+    paddingHorizontal: 20,
     margin: 10,
-    borderRadius: 5,
+    borderRadius: 10, // Rounded corners
     zIndex: 1000, // Ensure it's above other components
+    shadowColor: '#000', // Shadow effect
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 5,
+  },
+  title: {
+    color: '#0f5ca8', // Title color
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 5,
   },
   message: {
-    color: 'white', // Use 'white' instead of 'black' for better contrast
-    fontSize: 16,
+    color: '#0f5ca8', // Message color
+    fontSize: 15,
     textAlign: 'center',
+  },
+  button: {
+    marginLeft: 210,
+    borderRadius: 5,
+    marginTop: 10,
+  },
+  buttonText: {
+    color: '#0f5ca8', // Button text color
+    fontSize: 14,
   },
 });
 

@@ -198,12 +198,11 @@ export default function AddPostTab({ navigation }) {
       <TouchableOpacity
         onPress={onSubmit}
         style={[
-          localStyles.publishContainer,
-          { backgroundColor: colors.dark ? colors.primary : colors.black },
-        ]}>
-        <CText type={'b14'} numberOfLines={1} color={colors.white}>
-          {strings.publish}
-        </CText>
+                  localStyles.publishContainer
+                ]}>
+        <Text style={{ color: colors.black, fontWeight: '400', fontSize: moderateScale(16) }}>
+                  {strings.publish}
+                </Text>
       </TouchableOpacity>
     );
   };
@@ -308,10 +307,10 @@ export default function AddPostTab({ navigation }) {
 
 const localStyles = StyleSheet.create({
   publishContainer: {
-    ...styles.pv5,
-    ...styles.ph10,
-    borderRadius: moderateScale(24),
-  },
+      borderRadius: moderateScale(14),
+      width :60,
+      padding:5
+    },
   mainContainer: {
     ...styles.ph20,
     ...styles.flexGrow1,

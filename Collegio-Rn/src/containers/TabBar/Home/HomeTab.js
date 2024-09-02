@@ -8,17 +8,16 @@ import {
   ActivityIndicator,
   Text,
   Alert,
+  Modal,
 } from 'react-native';
 import Octicons from 'react-native-vector-icons/Octicons';
 import { useSelector } from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useIsFocused } from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
+import ImageViewer from 'react-native-image-zoom-viewer';
 
-// Custom imports
-import { TabNav } from '../../../navigation/NavigationKeys.js';
-import { StackNav } from '../../../navigation/NavigationKeys';
-import { AuthNav } from '../../../navigation/NavigationKeys';
+import { TabNav, StackNav } from '../../../navigation/NavigationKeys.js';
 import CSafeAreaView from '../../../components/common/CSafeAreaView';
 import CText from '../../../components/common/CText';
 import CProgressbar from '../../../components/common/CProgressbar';
@@ -41,55 +40,58 @@ export default function HomeTab({ navigation, route }) {
   const [userId, setUserId] = useState(null);
   const [communityId, setCommunityId] = useState(null);
   const [profilePath, setProfilePath] = useState(null);
+  const [isImageModalVisible, setIsImageModalVisible] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
 
-    const fetchUserById = async (id) => {
-        try {
-          const response = await fetch(`${API_BASE_URL}/api/User/${id}`);
-          if (!response.ok) {
-            throw new Error(`Failed to fetch user data: ${response.statusText}`);
-          }
-
-          const userData = await response.json();
-
-          if (userData.memberStatus !== "Active") {
-            Alert.alert(
-              "Alert",
-              "The account has been deactivated. Please review administration.",
-              [
-                { text: "OK", onPress: () => {
-                    setTimeout(() => {
-                      navigation.reset({
-                        index: 0,
-                         routes: [{name: StackNav.AuthNavigation}],
-                      });
-                    }, 1000);
-                  }
-                }
-              ],
-              { cancelable: false }
-            );
-            return;
-          }
-
-          setCommunityId(userData.communityId);
-          setProfilePath(userData.profilePath);
-          fetchPrePosts(userData.communityId);
-          fetchUserStories(id); // Fetch user-specific stories
-        } catch (error) {
-          console.error('Error fetching user data:', error.message);
-          setLoading(false);
-          setIsRefreshing(false);
-        }
-      };
-
-  const fetchPrePosts = async (communityId) => {
+  const fetchUserById = async (id) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/Post/PrePosts?PreCommunityId=${communityId}`);
+      const response = await fetch(`${API_BASE_URL}/api/User/${id}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch user data: ${response.statusText}`);
+      }
+
+      const userData = await response.json();
+
+      if (userData.memberStatus !== "Active") {
+        Alert.alert(
+          "Alert",
+          "The account has been deactivated. Please review administration.",
+          [
+            {
+              text: "OK", onPress: () => {
+                setTimeout(() => {
+                  navigation.reset({
+                    index: 0,
+                    routes: [{ name: StackNav.AuthNavigation }],
+                  });
+                }, 1000);
+              }
+            }
+          ],
+          { cancelable: false }
+        );
+        return;
+      }
+
+      setCommunityId(userData.communityId);
+      setProfilePath(userData.profilePath);
+      fetchPrePosts(userData.communityId, userData.id);
+      fetchUserStories(id);
+    } catch (error) {
+      console.error('Error fetching user data:', error.message);
+      setLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  const fetchPrePosts = async (communityId, id) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/Post/PrePosts?PreCommunityId=${communityId}&currentUserId=${id}`);
       if (!response.ok) {
         throw new Error(`Failed to fetch posts: ${response.statusText}`);
       }
       const data = await response.json();
-       setPosts(data.reverse());
+      setPosts(data.reverse());
       setLoading(false);
       setIsRefreshing(false);
     } catch (error) {
@@ -115,28 +117,25 @@ export default function HomeTab({ navigation, route }) {
     }
   };
 
-   const fetchUserStories = async (userId) => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/User/${userId}/stories`);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch user stories: ${response.statusText}`);
-        }
-        const data = await response.json();
-
-        const userStoriesWithUserId = data.map(story => ({
-          ...story,
-          userId: userId,
-          userProfileImageUrl: profilePath, // Assuming profilePath is the user's profile image URL
-        }));
-
-        setUserStories(userStoriesWithUserId);
-      } catch (error) {
-
-        setUserStories([]); // Set user stories to an empty array if there's an error
+  const fetchUserStories = async (userId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/User/${userId}/stories`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch user stories: ${response.statusText}`);
       }
-    };
+      const data = await response.json();
 
+      const userStoriesWithUserId = data.map(story => ({
+        ...story,
+        userId: userId,
+        userProfileImageUrl: profilePath,
+      }));
 
+      setUserStories(userStoriesWithUserId);
+    } catch (error) {
+      setUserStories([]);
+    }
+  };
 
   const groupStoriesByUser = (stories) => {
     const grouped = stories.reduce((acc, user) => {
@@ -184,7 +183,7 @@ export default function HomeTab({ navigation, route }) {
   useEffect(() => {
     if (isFocused && userId) {
       if (communityId) {
-        fetchPrePosts(communityId);
+        fetchPrePosts(communityId, userId);
       } else {
         fetchUserById(userId);
       }
@@ -196,7 +195,7 @@ export default function HomeTab({ navigation, route }) {
   const handleRefresh = () => {
     setIsRefreshing(true);
     if (communityId) {
-      fetchPrePosts(communityId);
+      fetchPrePosts(communityId, userId);
     } else if (userId) {
       fetchUserById(userId);
     }
@@ -228,14 +227,14 @@ export default function HomeTab({ navigation, route }) {
   const onPressSendIcon = () => {
     navigation.navigate(StackNav.Messages);
   };
+
   const onPressProgressBar = () => {
-      navigation.navigate(StackNav.PointScreen);
-    };
+    navigation.navigate(StackNav.PointScreen);
+  };
 
   const onPressStory = user => {
     const initialUserIndex = groupedStories.findIndex(u => u.userId === user.userId);
     if (initialUserIndex !== -1 || user.userId === userId) {
-      // If it's the current user's story, create a groupedStories entry for them
       const userStoriesEntry = {
         userId,
         userFullName: 'Your story',
@@ -259,8 +258,24 @@ export default function HomeTab({ navigation, route }) {
   };
 
   const renderPostComponent = ({ item }) => {
+    const onImagePress = (imageUrl) => {
+      setSelectedImage([{ url: imageUrl }]);
+      setIsImageModalVisible(true);
+    };
+
+    const handleDeletePost = () => {
+      handleRefresh();  // This will refresh the HomeTab content
+    };
+
     return (
-      <PostComponent item={item} onPress={() => onPressUserProfile(item)} userId={userId} updatePostLikes={updatePostLikes} />
+      <PostComponent
+        item={item}
+        onPress={() => onPressUserProfile(item)}
+        userId={userId}
+        updatePostLikes={updatePostLikes}
+        onImagePress={onImagePress}
+        onDelete={handleDeletePost} // Pass the handleDeletePost function as the onDelete prop
+      />
     );
   };
 
@@ -338,8 +353,8 @@ export default function HomeTab({ navigation, route }) {
             style={localStyles.logoContainer}
           />
           <View style={localStyles.progressContainer}>
-                  <CProgressbar navigation={navigation} progress={progress} />
-              </View>
+            <CProgressbar navigation={navigation} progress={progress} />
+          </View>
           <TouchableOpacity onPress={navigateToProfile} style={styles.ml10}>
             <Image
               source={profilePath ? { uri: profilePath } : null}
@@ -356,9 +371,10 @@ export default function HomeTab({ navigation, route }) {
           style={[
             localStyles.storyContainer,
             { backgroundColor: colors.placeholderColor },
-          ]}>
+          ]}
+        >
           <FlatList
-            data={[{}, ...groupedStories]} // Add an empty object to render "Add Post" as the first item
+            data={[{}, ...groupedStories]}
             renderItem={renderItem}
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -389,10 +405,21 @@ export default function HomeTab({ navigation, route }) {
           />
           <TouchableOpacity
             style={[localStyles.addPostButton, { backgroundColor: colors.primary }]}
-            onPress={navigateToAddPost}>
+            onPress={navigateToAddPost}
+          >
             <Octicons name={'plus'} size={moderateScale(20)} color={colors.white} />
           </TouchableOpacity>
         </>
+      )}
+      {selectedImage && (
+        <Modal visible={isImageModalVisible} transparent={true}>
+          <ImageViewer
+            imageUrls={selectedImage}
+            onCancel={() => setIsImageModalVisible(false)}
+            enableSwipeDown
+            renderIndicator={() => null}
+          />
+        </Modal>
       )}
     </CSafeAreaView>
   );
@@ -458,7 +485,7 @@ const localStyles = StyleSheet.create({
   progressContainer: {
     alignSelf: 'flex-start',
     width: '28%',
-    marginTop: 5,
+    marginTop: 13,
     marginLeft: 15,
   },
   userFullName: {

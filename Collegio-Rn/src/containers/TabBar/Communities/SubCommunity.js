@@ -5,6 +5,7 @@ import HeaderComponent from './HeaderComponent'; // Adjust the path if necessary
 import PostComponent from '../../../components/HomeComponent/PostComponent';
 import Octicons from 'react-native-vector-icons/Octicons';
 import { StackNav } from '../../../navigation/NavigationKeys';
+import { moderateScale, API_BASE_URL } from '../../../common/constants';
 
 const SubCommunity = ({ route, navigation }) => {
   const { communityId, imageUrl, name, nbMembers: initialNbMembers, description, onJoinLeave } = route.params;
@@ -32,7 +33,7 @@ const SubCommunity = ({ route, navigation }) => {
 
   const checkUserMembership = async (userId, communityId) => {
     try {
-      const response = await fetch(`http://192.168.0.106:7210/api/Community/IsUserMemberOfSubCommunity?userId=${userId}&subCommunityId=${communityId}`);
+      const response = await fetch(`${API_BASE_URL}/api/Community/IsUserMemberOfSubCommunity?userId=${userId}&subCommunityId=${communityId}`);
       const data = await response.json();
       setIsJoined(data.isMember);
     } catch (error) {
@@ -43,7 +44,7 @@ const SubCommunity = ({ route, navigation }) => {
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const response = await fetch(`http://192.168.0.106:7210/api/Post/PreSubPosts?subCommunityId=${communityId}`);
+        const response = await fetch(`${API_BASE_URL}/api/Post/PreSubPosts?subCommunityId=${communityId}`);
         const data = await response.json();
         setPosts(data);
       } catch (error) {
@@ -76,7 +77,7 @@ const SubCommunity = ({ route, navigation }) => {
   const handleJoinCommunity = async () => {
     try {
       console.log(`Joining community: userId=${userId}, subCommunityId=${communityId}`);
-      const response = await fetch(`http://192.168.0.106:7210/api/Community/AddUserToSubCommunity`, {
+      const response = await fetch(`${API_BASE_URL}:7210/api/Community/AddUserToSubCommunity`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -104,7 +105,7 @@ const SubCommunity = ({ route, navigation }) => {
 
   const handleLeaveCommunity = async () => {
     try {
-      const apiUrl = `http://192.168.0.106:7210/api/Community/RemoveUserFromSubCommunity?UserId=${userId}&SubCommunityId=${communityId}`;
+      const apiUrl = `${API_BASE_URL}/api/Community/RemoveUserFromSubCommunity?UserId=${userId}&SubCommunityId=${communityId}`;
 
       console.log('Leaving community with API URL:', apiUrl);
 
